@@ -4,8 +4,8 @@ A `make`-based tool for downloading Census [Tiger Line](http://www.census.gov/ge
 
 ## Requirements
 
-* ogr2ogr ([GDAL](http://www.gdal.org))
-* [jq](https://stedolan.github.io/jq)
+* ogr2ogr ([GDAL](http://www.gdal.org)) (v1.10+)
+* [jq](https://stedolan.github.io/jq) (v1.5+)
 
 On OS X, install [Homebrew](http://brew.sh) and run: `brew install gdal jq`.
 
@@ -26,14 +26,20 @@ make DOWNLOAD=COUNTY
 make DOWNLOAD="STATE NATION"
 ````
 
-If you would like to only download some states, use the `STATE_FIPS` variable:
+These commands will download files into the `tl_2014` directory. For example, the first command will create `tl_2014/COUNTY/tl_2014_us_county.shp`, the second will create `tl_2014/STATE/tl_2014_us_state.shp` and `tl_2014/NATION/cb_2014_us_nation_5m.shp`.
 
+Some commands will download many files. For instance, this will download files for the fifty states, DC and Puerto Rico:
+````bash
+make DOWNLOAD=PLACE
+````
+
+To download only some states and territories, use the `STATE_FIPS` variable:
 ````bash
 # Only New York
-make DOWNLOAD=COUNTY STATE_FIPS=36
+make DOWNLOAD=PLACE STATE_FIPS=36
 
-# Only DC, Virginia and Maryland
-make DOWNLOAD=COUNTY STATE_FIPS="11 51 24"
+# Only DC, Maryland and Virginia
+make DOWNLOAD=PLACE STATE_FIPS="11 24 51"
 ````
 
 You may find a [list of state fips codes](https://en.wikipedia.org/wiki/Federal_Information_Processing_Standard_state_code) handy.
@@ -76,3 +82,4 @@ make SERIES=acs1 DOWNLOAD=TRACT
 
 * The Census API appends extra geography fields at the end of a request. For example, 'state', 'county', and 'tract' for a tract file. As part of the processing, these are converted to numbers, which reduces their usefulness. Use the GEOID field for joining.
 * The AWATER (water area) and ALAND (land area) fields are given in square meters. `ogr2ogr` has trouble with values more than nine digits long, so these will return errors. The Makefile adds LANDKM and WATERKM fields (the same data in square kilometers) to get around this issue.
+* For the Nation, Region and Division data sets, this will download the [cartographic boundary](https://www.census.gov/geo/maps-data/data/tiger-cart-boundary.html) files, rather than [Tiger/Line](https://www.census.gov/geo/maps-data/data/tiger-line.html) files. The cartographic files are clipped to the shoreline, Tiger/Line files are not.

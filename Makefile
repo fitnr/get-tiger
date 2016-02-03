@@ -16,18 +16,22 @@ FOLDERS = DIVISION NATION REGION \
 	AIANNH AITSN ANRC BG CNECTA \
 	CBSA CD CONCITY COUNTY COUSUB CSA \
 	ELSD ESTATE METDIV MIL NECTA NECTADIV \
-	PLACE PRIMARYROADS PRISECROADS PUMA \
+	PLACE PRIMARYROADS PRISECROADS PUMA RAILS \
 	SCSD SLDL SLDU STATE SUBBARRIO TABBLOCK TBG \
 	TRACT TTRACT UAC UNSD ZCTA5
 
+# Cartographic boundary files
 CARTO = $(DIVISION) $(NATION) $(REGION)
 
+# Geodata with no survey data available from the API
 NODATA = $(ESTATE) $(MIL) $(PRIMARYROADS) $(PRISECROADS) \
 	$(RAILS) $(SUBBARRIO) $(TABBLOCK)
 
+# National data sets
 TIGER_NATIONAL = $(AIANNH) $(AITSN) $(ANRC) $(CNECTA) $(CBSA) $(CD) \
 	$(COUNTY) $(CSA) $(METDIV) $(NECTA) $(NECTADIV) $(STATE) $(TBG)
 
+# One data set for each state
 TIGER_BY_STATE = $(BG) $(CONCITY) $(COUSUB) $(ELSD) $(PLACE) \
 	$(SCSD) $(SLDL) $(SLDU) $(TRACT) $(TTRACT) $(UNSD)
 
@@ -53,7 +57,7 @@ CURL = curl $(CURLFLAGS)
 CURLFLAGS = --get $(API_BASE)/$(YEAR)/$(SERIES) \
 	-o $@ \
 	--data key=$(KEY) \
-	--data get=$(CENSUS_DATA_FIELDS) \
+	--data get=$(CENSUS_DATA_FIELDS)
 
 include geographies.ini
 include key.ini
@@ -112,23 +116,21 @@ endif
 #  tl_$(YEAR)/AIANNH/tl_$(YEAR)_us_aiannh.shp
 #  tl_$(YEAR)/AIANNH/acs5.shp
 
-$(addsuffix .shp,$(addprefix tl_$(YEAR)/,$(NODATA))): tl_$(YEAR)/%.shp: tl_$(YEAR)/%.zip
-	unzip -oqd $(@F) $<
+$(addsuffix .shp,$(addprefix tl_$(YEAR)/,$(NODATA) $(NATION))): tl_$(YEAR)/%.shp: tl_$(YEAR)/%.zip
+	unzip -oqd $(@D) $<
 	@touch $@
 
-cb_$(YEAR)/%.shp: cb_$(YEAR)/%.zip cb_$(YEAR)/%_$(SERIES).csv
-	ogr2ogr -f 'ESRI Shapefile' $@ /vsizip/$</$(@F) \
-	-overwrite  -lco RESIZE=YES -dialect sqlite \
-	-sql "SELECT *, ALAND/1000000 LANDKM, AWATER/1000000 WATERKM FROM $(basename $(@F)) LEFT JOIN \
-	'$(lastword $^)'.$(basename $(lastword $(^F))) USING (GEOID)"
+SHPS_2010 = $(addprefix tl_$(YEAR)/,$(addsuffix .shp,$(TIGER_2010_NATIONAL) $(TIGER_2010_STATE)))
 
-$(addsuffix .shp,$(addprefix tl_$(YEAR)/,$(TIGER_2010_NATIONAL) $(TIGER_2010_STATE))): tl_$(YEAR)/%.shp: tl_$(YEAR)/%.zip tl_$(YEAR)/%_$(SERIES).csv
+$(SHPS_2010): tl_$(YEAR)/%.shp: tl_$(YEAR)/%.zip tl_$(YEAR)/%_$(SERIES).csv
 	ogr2ogr -f 'ESRI Shapefile' $@ /vsizip/$</$(@F) \
 	-overwrite -lco RESIZE=YES -dialect sqlite \
 	-sql "SELECT *, ALAND10/1000000 LANDKM, AWATER10/1000000 WATERKM FROM $(basename $(@F)) a LEFT JOIN \
 	'$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID10=b.GEOID)"
 
-$(addsuffix .shp,$(addprefix tl_$(YEAR)/,$(TIGER_NATIONAL) $(TIGER_BY_STATE))): tl_$(YEAR)/%.shp: tl_$(YEAR)/%.zip tl_$(YEAR)/%_$(SERIES).csv
+SHPS = $(addprefix tl_$(YEAR)/,$(addsuffix .shp,$(REGION) $(DIVISION) $(TIGER_NATIONAL) $(TIGER_BY_STATE)))
+
+$(SHPS): tl_$(YEAR)/%.shp: tl_$(YEAR)/%.zip tl_$(YEAR)/%_$(SERIES).csv
 	ogr2ogr -f 'ESRI Shapefile' $@ /vsizip/$</$(@F) \
 	-overwrite -lco RESIZE=YES -dialect sqlite \
 	-sql "SELECT *, ALAND/1000000 LANDKM, AWATER/1000000 WATERKM FROM $(basename $(@F)) LEFT JOIN \
@@ -152,13 +154,13 @@ TOCSV = ([.[0]] + ( \
 
 # Carto boundary files
 
-cb_$(YEAR)/$(NATION)_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/$(NATION)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=us:*'
 
-cb_$(YEAR)/$(REGION)_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/$(REGION)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=region:*'
 
-cb_$(YEAR)/$(DIVISION)_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/$(DIVISION)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=division:*'
 
 # National data files
@@ -198,7 +200,7 @@ tl_$(YEAR)/NECTADIV/tl_$(YEAR)_us_nectadiv_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=necta+division:*'
 
 tl_$(YEAR)/STATE/tl_$(YEAR)_us_state_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'state:*'
+	$(CURL) --data 'for=state:*'
 
 tl_$(YEAR)/TBG/tl_$(YEAR)_us_tbg_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=tribal+block+group:*'
@@ -252,8 +254,8 @@ tl_$(YEAR)/UNSD/tl_$(YEAR)_%_unsd_$(SERIES).json: | $$(@D)
 $(addsuffix .zip,$(addprefix tl_$(YEAR)/,$(TIGER) $(NODATA))): tl_$(YEAR)/%: | $$(@D)
 	curl -o $@ $(SHP_BASE)/$*
 
-$(addsuffix .zip,$(addprefix cb_$(YEAR)/,$(CARTO))): cb_$(YEAR)/%: | $$(@D)
-	curl -o $@ $(CARTO_BASE)/$*
+$(addsuffix .zip,$(addprefix tl_$(YEAR)/,$(CARTO))): tl_$(YEAR)/%: | $$(@D)
+	curl -o $@ $(CARTO_BASE)/$(*F)
 
-$(addprefix tl_$(YEAR)/,$(FOLDERS)) $(addprefix cb_$(YEAR)/,$(FOLDERS)):
-	mkdir -p $@
+$(addprefix tl_$(YEAR)/,$(FOLDERS)): tl_$(YEAR) ; mkdir $@
+tl_$(YEAR): ; mkdir $@
