@@ -66,6 +66,8 @@ driver.json = GeoJSON
 include geographies.ini
 include key.ini
 
+OGRFLAGS = -f $(driver.$(format)) -overwrite -lco RESIZE=YES -dialect sqlite
+
 .PHONY: all fips
 
 ifdef DOWNLOAD
@@ -114,6 +116,11 @@ ifndef DOWNLOAD
 	@echo UAC - Urbanized areas
 	@echo UNSD - Unified school districts
 	@echo ZCTA5 - Zip code tabulation areas
+
+else
+	@echo downloaded:
+	@echo $^
+
 endif
 
 # Merge shp and acs data
@@ -128,18 +135,20 @@ $(addsuffix .$(format),$(addprefix tl_$(YEAR)/,$(NODATA) $(NATION))): tl_$(YEAR)
 SHPS_2010 = $(addprefix tl_$(YEAR)/,$(addsuffix .$(format),$(TIGER_2010_NATIONAL) $(TIGER_2010_STATE)))
 
 $(SHPS_2010): tl_$(YEAR)/%.$(format): tl_$(YEAR)/%.zip tl_$(YEAR)/%_$(SERIES).csv
-	ogr2ogr -f $(driver.$(format)) $@ /vsizip/$</$(@F) \
-	-overwrite -lco RESIZE=YES -dialect sqlite \
-	-sql "SELECT *, ALAND10/1000000 LANDKM, AWATER10/1000000 WATERKM FROM $(basename $(@F)) a LEFT JOIN \
-	'$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID10=b.GEOID)"
+	ogr2ogr $@ /vsizip/$</$(@F) $(OGRFLAGS) \
+	-sql "SELECT *, $(foreach f,$(wordlist 2,100,$(DATA_FIELDS)),CAST(b.$f AS REAL) $f,) \
+	ALAND10/1000000 LANDKM, AWATER10/1000000 WATERKM \
+	FROM $(basename $(@F)) a \
+	LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID10=b.GEOID)"
 
 SHPS = $(addprefix tl_$(YEAR)/,$(addsuffix .$(format),$(REGION) $(DIVISION) $(TIGER_NATIONAL) $(TIGER_BY_STATE)))
 
 $(SHPS): tl_$(YEAR)/%.$(format): tl_$(YEAR)/%.zip tl_$(YEAR)/%_$(SERIES).csv
-	ogr2ogr -f $(driver.$(format)) $@ /vsizip/$</$(@F) \
-	-overwrite -lco RESIZE=YES -dialect sqlite \
-	-sql "SELECT *, ALAND/1000000 LANDKM, AWATER/1000000 WATERKM FROM $(basename $(@F)) LEFT JOIN \
-	'$(lastword $^)'.$(basename $(lastword $(^F))) USING (GEOID)"
+	ogr2ogr $@ /vsizip/$</$(@F) $(OGRFLAGS) \
+	-sql "SELECT a.*, $(foreach f,$(wordlist 2,100,$(DATA_FIELDS)),CAST(b.$f AS REAL) $f,) \
+	ALAND/1000000 LANDKM, AWATER/1000000 WATERKM \
+	FROM $(basename $(@F)) a \
+	LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) b USING (GEOID)"
 
 # Census API has a strange CSV-like format, and passes numbers as strings. This fixed that
 
@@ -262,5 +271,6 @@ $(addsuffix .zip,$(addprefix tl_$(YEAR)/,$(TIGER) $(NODATA))): tl_$(YEAR)/%: | $
 $(addsuffix .zip,$(addprefix tl_$(YEAR)/,$(CARTO))): tl_$(YEAR)/%: | $$(@D)
 	curl -o $@ $(CARTO_BASE)/$(*F)
 
-$(addprefix tl_$(YEAR)/,$(FOLDERS)): tl_$(YEAR) ; mkdir $@
-tl_$(YEAR): ; mkdir $@
+$(addprefix tl_$(YEAR)/,$(FOLDERS)): tl_$(YEAR); -mkdir $@
+
+tl_$(YEAR):; -mkdir $@
