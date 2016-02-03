@@ -36,10 +36,11 @@ make NATION STATE
 make COUNTY TRACT
 ````
 
-These commands will download files into the `tl_2014` directory. After running, you'll get a list of the files created, e.g.:
+Make will run the commands to download the shapefiles and data from the Census, then join them. You'll see the commands run on your screen, sit back and enjoy the show. The files will end up in a directory called `2014/`. At the end, you'll get a list of the files created, e.g.:
 ```bash
 > make NATION STATE
-tl_2014/NATION/cb_2014_us_nation_5m.shp tl_2014/STATE/tl_2014_us_state.shp
+...
+2014/NATION/cb_2014_us_nation_5m.shp 2014/STATE/tl_2014_us_state.shp
 ```
 
 Some commands will download many files. For instance, this will download files for the fifty states, DC and Puerto Rico:
