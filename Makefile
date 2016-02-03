@@ -155,8 +155,7 @@ $(SHPS): tl_$(YEAR)/%.$(format): tl_$(YEAR)/%.zip tl_$(YEAR)/%_$(SERIES).csv
 
 TOCSV = ([.[0]] + ( \
 			.[1:] | map( \
-				[ .[0] | sub("^[0-9]+US"; "") ] + \
-				( .[1:] | map(if . == null then null else tonumber end) ) \
+				[ .[0] | sub("^[0-9]+US"; "") ] + .[1:] \
 			) \
 		)) | \
 	.[] | @csv
