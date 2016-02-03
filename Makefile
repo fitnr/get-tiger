@@ -12,6 +12,12 @@ API_BASE = http://api.census.gov/data
 
 SERIES = acs5
 
+DATASETS = NATION REGION DIVISION AIANNH AITSN ANRC \
+	BG CBSA CD CNECTA CONCITY COUNTY COUSUB CSA ELSD \
+	ESTATE METDIV MIL NECTA NECTADIV PLACE PRISECROADS \
+	PRIMARYROADS PUMA RAILS SCSD SLDL SLDU STATE SUBBARRIO \
+	TABBLOCK TBG TTRACT TRACT UAC UNSD
+
 # Cartographic boundary files
 # National data sets
 CARTO_NATIONAL = $(DIVISION) $(REGION) $(ANRC) $(CD)
@@ -70,21 +76,14 @@ include key.ini
 
 OGRFLAGS = -f $(driver.$(format)) -overwrite -lco RESIZE=YES -dialect sqlite
 
-.PHONY: all fips
+.PHONY: all $(DATASETS)
 
-ifdef DOWNLOAD
-
-TARGETS = $(addprefix tl_$(YEAR)/,$(addsuffix .$(format),$(foreach i,$(DOWNLOAD),$($i))))
-
-endif
-
-all: $(TARGETS)
-ifndef DOWNLOAD
+all:
 	@echo Available data sets:
-	@echo Download with "make DOWNLOAD=DATASET"
+	@echo (run with "make DATASET")
 	@echo NATION - United States
-	@echo DIVISION
-	@echo REGION
+	@echo DIVISION - four very broad sections of the country
+	@echo REGION - nine broad sections of the country
 	@echo AIANNH - American Indian areas, Alaska Native areas, Hawaiian home lands
 	@echo AITSN - American Indian tribal subvidisions
 	@echo ANRC - Alaska Native regional corporations
@@ -119,11 +118,10 @@ ifndef DOWNLOAD
 	@echo UNSD - Unified school districts
 	@echo ZCTA5 - Zip code tabulation areas
 
-else
-	@echo downloaded: >&1
-	@echo $^
+.SECONDEXPANSION:
 
-endif
+$(DATASETS): $$(addprefix tl_$(YEAR)/,$$(addsuffix .$(format),$$($$@)))
+	@echo $^
 
 # Merge shp and acs data
 # e.g. tl_$(YEAR)/AIANNH/tl_$(YEAR)_us_aiannh.zip: \
@@ -166,7 +164,6 @@ TOCSV = ([.[0]] + ( \
 %.csv: %.json
 	jq --raw-output '$(TOCSV)' $< > $@
 
-.SECONDEXPANSION:
 # Download ACS data
 
 # Carto boundary files
