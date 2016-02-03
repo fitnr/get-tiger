@@ -12,34 +12,36 @@ API_BASE = http://api.census.gov/data
 
 SERIES = acs5
 
-FOLDERS = DIVISION NATION REGION \
-	AIANNH AITSN ANRC BG CNECTA \
-	CBSA CD CONCITY COUNTY COUSUB CSA \
-	ELSD ESTATE METDIV MIL NECTA NECTADIV \
-	PLACE PRIMARYROADS PRISECROADS PUMA RAILS \
-	SCSD SLDL SLDU STATE SUBBARRIO TABBLOCK TBG \
-	TRACT TTRACT UAC UNSD ZCTA5
-
 # Cartographic boundary files
-CARTO = $(DIVISION) $(NATION) $(REGION)
+# National data sets
+CARTO_NATIONAL = $(DIVISION) $(REGION) $(ANRC) $(CD)
 
-# Geodata with no survey data available from the API
-NODATA = $(ESTATE) $(MIL) $(PRIMARYROADS) $(PRISECROADS) \
-	$(RAILS) $(SUBBARRIO) $(TABBLOCK)
+# Data sets that need to be joined w/ 'GEOID10' instead of GEOID.
+CARTO_2010 = $(UAC) $(ZCTA5)
+
+# Per-state data sets
+CARTO_BY_STATE = $(COUSUB) $(PLACE) $(SLDL) $(SLDU) $(TRACT)
+
+# Per-state data sets that need to be joined w/ 'GEOID10' instead of GEOID.
+CARTO_2010_STATE = $(PUMA)
+
+CARTO_NODATA = $(NATION)
+
+CARTO = $(CARTO_NATIONAL) $(CARTO_2010) $(CARTO_BY_STATE) $(CARTO_2010_STATE)
 
 # National data sets
-TIGER_NATIONAL = $(AIANNH) $(AITSN) $(ANRC) $(CNECTA) $(CBSA) $(CD) \
+TIGER_NATIONAL = $(AIANNH) $(AITSN) $(CNECTA) $(CBSA) \
 	$(COUNTY) $(CSA) $(METDIV) $(NECTA) $(NECTADIV) $(STATE) $(TBG)
 
-# One data set for each state
-TIGER_BY_STATE = $(BG) $(CONCITY) $(COUSUB) $(ELSD) $(PLACE) \
-	$(SCSD) $(SLDL) $(SLDU) $(TRACT) $(TTRACT) $(UNSD)
+# Per-state data sets.
+TIGER_BY_STATE = $(BG) $(CONCITY) $(ELSD) \
+	$(SCSD) $(TTRACT) $(UNSD)
 
-TIGER_2010_NATIONAL = $(ZCTA5) $(UAC)
-TIGER_2010_STATE = $(PUMA)
+# Geodata with no survey data available from the API
+TIGER_NODATA = $(ESTATE) $(MIL) $(PRIMARYROADS) $(PRISECROADS) \
+	$(RAILS) $(SUBBARRIO) $(TABBLOCK)
 
-TIGER = $(TIGER_NATIONAL) $(TIGER_BY_STATE) \
-	$(TIGER_2010_NATIONAL) $(TIGER_2010_STATE)
+TIGER = $(TIGER_NATIONAL) $(TIGER_BY_STATE)
 
 comma = ,
 null =
@@ -118,7 +120,7 @@ ifndef DOWNLOAD
 	@echo ZCTA5 - Zip code tabulation areas
 
 else
-	@echo downloaded:
+	@echo downloaded: >&1
 	@echo $^
 
 endif
@@ -127,12 +129,13 @@ endif
 # e.g. tl_$(YEAR)/AIANNH/tl_$(YEAR)_us_aiannh.zip: \
 #  tl_$(YEAR)/AIANNH/tl_$(YEAR)_us_aiannh.shp
 #  tl_$(YEAR)/AIANNH/acs5.shp
+NODATA = $(addsuffix .$(format),$(addprefix tl_$(YEAR)/,$(CARTO_NODATA) $(TIGER_NODATA)))
 
-$(addsuffix .$(format),$(addprefix tl_$(YEAR)/,$(NODATA) $(NATION))): tl_$(YEAR)/%.$(format): tl_$(YEAR)/%.zip
+$(NODATA): tl_$(YEAR)/%.$(format): tl_$(YEAR)/%.zip
 	unzip -oqd $(@D) $<
 	@touch $@
 
-SHPS_2010 = $(addprefix tl_$(YEAR)/,$(addsuffix .$(format),$(TIGER_2010_NATIONAL) $(TIGER_2010_STATE)))
+SHPS_2010 = $(addprefix tl_$(YEAR)/,$(addsuffix .$(format),$(CARTO_2010) $(CARTO_2010_STATE)))
 
 $(SHPS_2010): tl_$(YEAR)/%.$(format): tl_$(YEAR)/%.zip tl_$(YEAR)/%_$(SERIES).csv
 	ogr2ogr $@ /vsizip/$</$(@F) $(OGRFLAGS) \
@@ -141,7 +144,7 @@ $(SHPS_2010): tl_$(YEAR)/%.$(format): tl_$(YEAR)/%.zip tl_$(YEAR)/%_$(SERIES).cs
 	FROM $(basename $(@F)) a \
 	LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID10=b.GEOID)"
 
-SHPS = $(addprefix tl_$(YEAR)/,$(addsuffix .$(format),$(REGION) $(DIVISION) $(TIGER_NATIONAL) $(TIGER_BY_STATE)))
+SHPS = $(addprefix tl_$(YEAR)/,$(addsuffix .$(format),$(CARTO_NATIONAL) $(CARTO_BY_STATE) $(TIGER_NATIONAL) $(TIGER_BY_STATE)))
 
 $(SHPS): tl_$(YEAR)/%.$(format): tl_$(YEAR)/%.zip tl_$(YEAR)/%_$(SERIES).csv
 	ogr2ogr $@ /vsizip/$</$(@F) $(OGRFLAGS) \
@@ -179,53 +182,53 @@ tl_$(YEAR)/$(DIVISION)_$(SERIES).json: | $$(@D)
 
 # National data files
 
-tl_$(YEAR)/AIANNH/tl_$(YEAR)_us_aiannh_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/$(AIANNH)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=american+indian+area/alaska+native+area/hawaiian+home+land:*'
 
 tl_$(YEAR)/AITSN/tl_$(YEAR)_us_aitsn_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=tribal+subdivision/remainder:*'
 
 # Not actually national, there's just one state with Alaska Native Regional Corps (Guess which one!)
-tl_$(YEAR)/ANRC/tl_$(YEAR)_02_anrc_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/$(ANRC)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=alaska+native+regional+corporation:*'
 
-tl_$(YEAR)/CD/tl_$(YEAR)_us_cd114_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/$(CD)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=congressional+district:*' --data in=state:$*
 
-tl_$(YEAR)/CBSA/tl_$(YEAR)_us_cbsa_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/$(CBSA)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=metropolitan+statistical+area/micropolitan+statistical+area:*'
 
-tl_$(YEAR)/CNECTA/tl_$(YEAR)_us_cnecta_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/$(CNECTA)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=combined+new+england+city+and+town+area:*'
 
-tl_$(YEAR)/COUNTY/tl_$(YEAR)_us_county_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/$(COUNTY)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=county:*'
 
-tl_$(YEAR)/CSA/tl_$(YEAR)_us_csa_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/$(CSA)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=combined+statistical+area:*'
 
-tl_$(YEAR)/METDIV/tl_$(YEAR)_us_metdiv_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/$(METDIV)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=metropolitan+division:*'
 
-tl_$(YEAR)/NECTA/tl_$(YEAR)_us_necta_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/$(NECTA)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=new+england+city+and+town+area:*'
 
-tl_$(YEAR)/NECTADIV/tl_$(YEAR)_us_nectadiv_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/$(NECTADIV)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=necta+division:*'
 
-tl_$(YEAR)/STATE/tl_$(YEAR)_us_state_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/$(STATE)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=state:*'
 
-tl_$(YEAR)/TBG/tl_$(YEAR)_us_tbg_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/$(TBG)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=tribal+block+group:*'
 
-tl_$(YEAR)/TTRACT/tl_$(YEAR)_us_ttract_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/$(TTRACT)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=tribal+census+tract:*'
 
-tl_$(YEAR)/UAC/tl_$(YEAR)_us_uac10_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/$(UAC)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=urban+area:*'
 
-tl_$(YEAR)/ZCTA5/tl_$(YEAR)_us_zcta510_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/$(ZCTA5)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=zip+code+tabulation+area:*'
 
 # State by state files
@@ -236,28 +239,28 @@ tl_$(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).json: | $$(@D)
 tl_$(YEAR)/CONCITY/tl_$(YEAR)_%_concity_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=consolidated+city:*' --data in=state:$*
 
-tl_$(YEAR)/COUSUB/tl_$(YEAR)_%_cousub_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/COUSUB/cb_$(YEAR)_%_cousub_500k_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=county+subdivision:*' --data in=state:$*
 
 tl_$(YEAR)/ELSD/tl_$(YEAR)_%_elsd_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=school+district+(elementary):*' --data in=state:$*
 
-tl_$(YEAR)/PLACE/tl_$(YEAR)_%_place_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/PLACE/cb_$(YEAR)_%_place_500k_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=place:*' --data in=state:$*
 
-tl_$(YEAR)/PUMA/tl_$(YEAR)_%_puma_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/PUMA/cb_$(YEAR)_%_puma10_500k_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=public+use+microdata+area:*' --data in=state:$*
 
 tl_$(YEAR)/SCSD/tl_$(YEAR)_%_scsd_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=school+district+(secondary):*' --data in=state:$*
 
-tl_$(YEAR)/SLDL/tl_$(YEAR)_%_sldl_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/SLDL/cb_$(YEAR)_%_sldl_500k_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=state+legislative+district+(lower+chamber):*' --data in=state:$*
 
-tl_$(YEAR)/SLDU/tl_$(YEAR)_%_sldu_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/SLDU/cb_$(YEAR)_%_sldu_500k_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=state+legislative+district+(upper+chamber):*' --data in=state:$*
 
-tl_$(YEAR)/TRACT/tl_$(YEAR)_%_tract_$(SERIES).json: | $$(@D)
+tl_$(YEAR)/TRACT/cb_$(YEAR)_%_tract_500k_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=tract:*' --data in=state:$*
 
 tl_$(YEAR)/UNSD/tl_$(YEAR)_%_unsd_$(SERIES).json: | $$(@D)
@@ -265,12 +268,13 @@ tl_$(YEAR)/UNSD/tl_$(YEAR)_%_unsd_$(SERIES).json: | $$(@D)
 
 # Download ZIP files
 
-$(addsuffix .zip,$(addprefix tl_$(YEAR)/,$(TIGER) $(NODATA))): tl_$(YEAR)/%: | $$(@D)
+$(addsuffix .zip,$(addprefix tl_$(YEAR)/,$(TIGER) $(TIGER_NODATA))): tl_$(YEAR)/%: | $$(@D)
 	curl -o $@ $(SHP_BASE)/$*
 
-$(addsuffix .zip,$(addprefix tl_$(YEAR)/,$(CARTO))): tl_$(YEAR)/%: | $$(@D)
+$(addsuffix .zip,$(addprefix tl_$(YEAR)/,$(CARTO) $(CARTO_NODATA))): tl_$(YEAR)/%: | $$(@D)
 	curl -o $@ $(CARTO_BASE)/$(*F)
 
-$(addprefix tl_$(YEAR)/,$(FOLDERS)): tl_$(YEAR); -mkdir $@
+$(sort $(dir $(addprefix tl_$(YEAR)/,$(TIGER) $(TIGER_NODATA) $(CARTO) $(CARTO_NODATA)))): tl_$(YEAR)
+	-mkdir $@
 
 tl_$(YEAR):; -mkdir $@
