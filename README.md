@@ -1,6 +1,6 @@
-## Census downloader
+# Get tiger
 
-This repo is a utility for downloading Census [Tiger Line](http://www.census.gov/geo/maps-data/data/tiger.html) Shapefiles and automatically joining them to data downloaded from the [Census API](http://www.census.gov/data/developers/data-sets.html). This Makefile does is automatically.
+A `make`-based tool for downloading Census [Tiger Line](http://www.census.gov/geo/maps-data/data/tiger.html) Shapefiles and automatically joining them to data downloaded from the [Census API](http://www.census.gov/data/developers/data-sets.html). This Makefile does is automatically.
 
 ## Requirements
 
@@ -12,7 +12,7 @@ On OS X, install [Homebrew](http://brew.sh) and run: `brew install gdal jq`.
 ## Install
 
 * Download the repo and put the contents in the folder you would like to fill with GIS data.
-* Get a [Census API key](http://api.census.gov/data/key_signup.html) (yes, that's the real site).
+* Get a [Census API key](http://api.census.gov/data/key_signup.html) (yes, it's pretty bare-bones).
 * Put that key in `key_example.ini`, and rename it `key.ini`.
 
 ## Use
@@ -23,8 +23,6 @@ To download one or more, run with the `DOWNLOAD` variable, like so:
 
 ````bash
 make DOWNLOAD=COUNTY
-````
-````bash
 make DOWNLOAD="STATE NATION"
 ````
 
@@ -38,9 +36,9 @@ make DOWNLOAD=COUNTY STATE_FIPS=36
 make DOWNLOAD=COUNTY STATE_FIPS="11 51 24"
 ````
 
-If you would like a reference for state fips code, see `fips.txt`.
+If you would like a reference for state fips code, see [`fips.txt`](fips.txt).
 
-### What data
+## What data
 
 A current weakness is that data is downloaded with no data dictionary, and cryptic field names. The [data.json](data.json) file has a data dictionary for the variables I've chosen. 
 
@@ -68,7 +66,9 @@ make SERIES=acs1 DOWNLOAD=TRACT
 
 (This isn't tested for all data series, but should work.)
 
-Interesting tidbits:
+To change any of these defaults permanently, just edit the Makefile. If you want to be cautious, add your changes to `key.ini`. Variables there will override ones in the [`Makefile`](Makefile).
+
+### Interesting tidbits
 
 * The Census API appends extra geography fields at the end of a request. For example, 'state', 'county', and 'tract' for a tract file. As part of the processing, these are converted to numbers, which reduces their usefulness. Use the GEOID field for joining.
 * The AWATER (water area) and ALAND (land area) fields are given in square meters. `ogr2ogr` has trouble with values more than nine digits long, so these will return errors. The Makefile adds LANDKM and WATERKM fields (the same data in square kilometers) to get around this issue.
