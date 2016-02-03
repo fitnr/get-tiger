@@ -36,18 +36,24 @@ make DOWNLOAD=COUNTY STATE_FIPS=36
 make DOWNLOAD=COUNTY STATE_FIPS="11 51 24"
 ````
 
-If you would like a reference for state fips code, see [`fips.txt`](fips.txt).
+You may find a [list of state fips codes](https://en.wikipedia.org/wiki/Federal_Information_Processing_Standard_state_code) handy.
 
 ## What data
 
-A current weakness is that data is downloaded with no data dictionary, and cryptic field names. The [data.json](data.json) file has a data dictionary for the variables I've chosen. 
+A current weakness is that data is downloaded with no data dictionary, and cryptic field names. I've included a data dictionary ([data.json](data.json)) for the default fields.
 
-To download different fields, see the [Census API documentation](http://www.census.gov/data/developers/data-sets/acs-survey-5-year-data.html) for a complete list. Make your selection, then run:
+To download different data, see the [Census API documentation](http://www.census.gov/data/developers/data-sets/acs-survey-5-year-data.html) for a complete list. Make your selection, then run:
 
 ````bash
 make DOWNLOAD=STATE DATA_FIELDS="GEOID B24124_406E B24124_407E"
 ````
 Note that `GEOID` must be the first field. This example will download employment figures for commercial divers and locksmiths.
+
+You could also add these fields to `key.ini`:
+````make
+DATA FIELDS = GEOID B24124_406E B24124_407E
+````
+This will override the defaults in the [`Makefile`](Makefile).
 
 ### Vintage
 
@@ -63,10 +69,8 @@ The default data series is ACS 5-year data or `acs5`. To fetch another data set,
 ```bash
 make SERIES=acs1 DOWNLOAD=TRACT
 ```
-
 (This isn't tested for all data series, but should work.)
 
-To change any of these defaults permanently, just edit the Makefile. If you want to be cautious, add your changes to `key.ini`. Variables there will override ones in the [`Makefile`](Makefile).
 
 ### Interesting tidbits
 
