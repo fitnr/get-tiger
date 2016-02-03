@@ -59,6 +59,10 @@ CURLFLAGS = --get $(API_BASE)/$(YEAR)/$(SERIES) \
 	--data key=$(KEY) \
 	--data get=$(CENSUS_DATA_FIELDS)
 
+format = shp
+driver.shp  = 'ESRI Shapefile'
+driver.json = GeoJSON
+
 include geographies.ini
 include key.ini
 
@@ -66,7 +70,7 @@ include key.ini
 
 ifdef DOWNLOAD
 
-TARGETS = $(addprefix tl_$(YEAR)/,$(addsuffix .shp,$(foreach i,$(DOWNLOAD),$($i))))
+TARGETS = $(addprefix tl_$(YEAR)/,$(addsuffix .$(format),$(foreach i,$(DOWNLOAD),$($i))))
 
 endif
 
@@ -111,27 +115,28 @@ ifndef DOWNLOAD
 	@echo UNSD - Unified school districts
 	@echo ZCTA5 - Zip code tabulation areas
 endif
+
 # Merge shp and acs data
 # e.g. tl_$(YEAR)/AIANNH/tl_$(YEAR)_us_aiannh.zip: \
 #  tl_$(YEAR)/AIANNH/tl_$(YEAR)_us_aiannh.shp
 #  tl_$(YEAR)/AIANNH/acs5.shp
 
-$(addsuffix .shp,$(addprefix tl_$(YEAR)/,$(NODATA) $(NATION))): tl_$(YEAR)/%.shp: tl_$(YEAR)/%.zip
+$(addsuffix .$(format),$(addprefix tl_$(YEAR)/,$(NODATA) $(NATION))): tl_$(YEAR)/%.$(format): tl_$(YEAR)/%.zip
 	unzip -oqd $(@D) $<
 	@touch $@
 
-SHPS_2010 = $(addprefix tl_$(YEAR)/,$(addsuffix .shp,$(TIGER_2010_NATIONAL) $(TIGER_2010_STATE)))
+SHPS_2010 = $(addprefix tl_$(YEAR)/,$(addsuffix .$(format),$(TIGER_2010_NATIONAL) $(TIGER_2010_STATE)))
 
-$(SHPS_2010): tl_$(YEAR)/%.shp: tl_$(YEAR)/%.zip tl_$(YEAR)/%_$(SERIES).csv
-	ogr2ogr -f 'ESRI Shapefile' $@ /vsizip/$</$(@F) \
+$(SHPS_2010): tl_$(YEAR)/%.$(format): tl_$(YEAR)/%.zip tl_$(YEAR)/%_$(SERIES).csv
+	ogr2ogr -f $(driver.$(format)) $@ /vsizip/$</$(@F) \
 	-overwrite -lco RESIZE=YES -dialect sqlite \
 	-sql "SELECT *, ALAND10/1000000 LANDKM, AWATER10/1000000 WATERKM FROM $(basename $(@F)) a LEFT JOIN \
 	'$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID10=b.GEOID)"
 
-SHPS = $(addprefix tl_$(YEAR)/,$(addsuffix .shp,$(REGION) $(DIVISION) $(TIGER_NATIONAL) $(TIGER_BY_STATE)))
+SHPS = $(addprefix tl_$(YEAR)/,$(addsuffix .$(format),$(REGION) $(DIVISION) $(TIGER_NATIONAL) $(TIGER_BY_STATE)))
 
-$(SHPS): tl_$(YEAR)/%.shp: tl_$(YEAR)/%.zip tl_$(YEAR)/%_$(SERIES).csv
-	ogr2ogr -f 'ESRI Shapefile' $@ /vsizip/$</$(@F) \
+$(SHPS): tl_$(YEAR)/%.$(format): tl_$(YEAR)/%.zip tl_$(YEAR)/%_$(SERIES).csv
+	ogr2ogr -f $(driver.$(format)) $@ /vsizip/$</$(@F) \
 	-overwrite -lco RESIZE=YES -dialect sqlite \
 	-sql "SELECT *, ALAND/1000000 LANDKM, AWATER/1000000 WATERKM FROM $(basename $(@F)) LEFT JOIN \
 	'$(lastword $^)'.$(basename $(lastword $(^F))) USING (GEOID)"

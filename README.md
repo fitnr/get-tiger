@@ -77,6 +77,13 @@ make SERIES=acs1 DOWNLOAD=TRACT
 ```
 (This isn't tested for all data series, but should work.)
 
+### Format
+
+By default, this thing spits out Shapefiles. To get GeoJSON, set `format` to `json`:
+````bash
+make DOWNLOAD=TRACT format=json
+make DOWNLOAD=TRACT format=shp # default
+````
 
 ### Interesting tidbits
 
