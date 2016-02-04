@@ -74,7 +74,7 @@ driver.json = GeoJSON
 include geographies.ini
 include key.ini
 
-OGRFLAGS = -f $(driver.$(format)) -overwrite -lco RESIZE=YES -dialect sqlite
+OGRFLAGS = -f $(driver.$(format)) -overwrite -dialect sqlite
 
 .PHONY: all $(DATASETS)
 
@@ -134,24 +134,27 @@ $(NODATA): $(YEAR)/%.$(format): $(YEAR)/%.zip
 
 SHPS_2010 = $(addprefix $(YEAR)/,$(addsuffix .$(format),$(CARTO_2010) $(CARTO_2010_STATE)))
 
-$(SHPS_2010): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).csv
+$(SHPS_2010): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 	ogr2ogr $@ /vsizip/$</$(@F) $(OGRFLAGS) \
-	-sql "SELECT *, $(foreach f,$(wordlist 2,100,$(DATA_FIELDS)),CAST(b.$f AS REAL) $f,) \
-	ALAND10/1000000 LANDKM, AWATER10/1000000 WATERKM \
+	-sql "SELECT *, ALAND10/1000000 LANDKM, AWATER10/1000000 WATERKM \
 	FROM $(basename $(@F)) a \
 	LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID10=b.GEOID)"
 
 SHPS = $(addprefix $(YEAR)/,$(addsuffix .$(format),$(CARTO_NATIONAL) $(CARTO_BY_STATE) $(TIGER_NATIONAL) $(TIGER_BY_STATE)))
 
-$(SHPS): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).csv
+$(SHPS): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 	ogr2ogr $@ /vsizip/$</$(@F) $(OGRFLAGS) \
-	-sql "SELECT a.*, $(foreach f,$(wordlist 2,100,$(DATA_FIELDS)),CAST(b.$f AS REAL) $f,) \
-	ALAND/1000000 LANDKM, AWATER/1000000 WATERKM \
-	FROM $(basename $(@F)) a \
-	LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) b USING (GEOID)"
+	-sql "SELECT *, ALAND/1000000 LANDKM, AWATER/1000000 WATERKM \
+	FROM $(basename $(@F)) \
+	LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) USING (GEOID)"
 
-# Census API has a strange CSV-like format, and passes numbers as strings. This fixed that
+%.dbf: %.csv
+	ogr2ogr -f 'ESRI Shapefile' $@ $< -overwrite -dialect sqlite \
+	-sql "SELECT GEOID $(foreach f,$(wordlist 2,100,$(DATA_FIELDS)),, CAST($f AS REAL) $f) \
+	FROM $(basename $(@F))"
+	ogrinfo $@ -sql "CREATE INDEX ON $(basename $(@F)) USING GEOID"
 
+# Census API has a strange CSV-like format, includes "YY000US" prefix on GEOID.
 TOCSV = ([.[0]] + ( \
 			.[1:] | map( \
 				[ .[0] | sub("^[0-9]+US"; "") ] + .[1:] \
