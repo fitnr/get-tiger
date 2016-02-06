@@ -264,6 +264,17 @@ $(YEAR)/TRACT/cb_$(YEAR)_%_tract_500k_$(SERIES).json: | $$(@D)
 $(YEAR)/UNSD/tl_$(YEAR)_%_unsd_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=school+district+(unified):*' --data in=state:$*
 
+
+# Lists of county FIPS
+.PHONY: countyfips
+countyfips: $(addprefix counties/$(YEAR)/,$(STATE_FIPS))
+
+$(addprefix $(YEAR)/counties/,$(STATE_FIPS)): $(YEAR)/counties/%: | $$(@D)
+	curl --get $(API_BASE)/$(YEAR)/$(SERIES) --data key=$(KEY) \
+		--data 'for=county:*' --data in=state:$* --data get=GEOID | \
+	jq --raw-output '$(TOCSV)' | \
+	sed 's/"//g' | cut -d, -f3 | tail +2 > $@
+
 # Download ZIP files
 
 $(addsuffix .zip,$(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA))): $(YEAR)/%: | $$(@D)
@@ -275,4 +286,4 @@ $(addsuffix .zip,$(addprefix $(YEAR)/,$(CARTO) $(CARTO_NODATA))): $(YEAR)/%: | $
 $(sort $(dir $(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA) $(CARTO) $(CARTO_NODATA)))): $(YEAR)
 	-mkdir $@
 
-$(YEAR):; -mkdir $@
+$(YEAR) counties/$(YEAR):; -mkdir $@
