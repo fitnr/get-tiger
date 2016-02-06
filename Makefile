@@ -154,6 +154,16 @@ $(SHPS): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 	FROM $(basename $(@F))"
 	ogrinfo $@ -sql "CREATE INDEX ON $(basename $(@F)) USING GEOID"
 
+# County by State files
+
+COUNTY_PREREQS = $$(foreach f,$$(shell cat counties/$(YEAR)/$$*),$(YEAR)/BG/tl_$(YEAR)_$$*_$$f_bg_$(SERIES).csv)
+$(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: counties/$(YEAR)/% $(COUNTY_PREREQS) | $$(@D)
+	@rm -rf $@
+	head -1 $(lastword $^) > $@
+	for CSV in $(filter %.csv,$^); do \
+	tail +2 $$CSV; \
+	done >> $@
+
 # Census API has a strange CSV-like format, includes "YY000US" prefix on GEOID.
 TOCSV = ([.[0]] + ( \
 			.[1:] | map( \
@@ -229,10 +239,13 @@ $(YEAR)/$(UAC)_$(SERIES).json: | $$(@D)
 $(YEAR)/$(ZCTA5)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=zip+code+tabulation+area:*'
 
-# State by state files
+# County by state
 
+# e.g. 2014/BG/36_047_acs5.json
 $(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).json: | $$(@D)
-	$(CURL) --data for='block+group:*' --data in=state:$*
+	$(CURL) --data for='block+group:*' --data in=state:$(firstword $(subst _, ,$*))+county:$(lastword $(subst _, ,$*))
+
+# State by state files
 
 $(YEAR)/CONCITY/tl_$(YEAR)_%_concity_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=consolidated+city:*' --data in=state:$*
@@ -263,7 +276,6 @@ $(YEAR)/TRACT/cb_$(YEAR)_%_tract_500k_$(SERIES).json: | $$(@D)
 
 $(YEAR)/UNSD/tl_$(YEAR)_%_unsd_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=school+district+(unified):*' --data in=state:$*
-
 
 # Lists of county FIPS
 .PHONY: countyfips
