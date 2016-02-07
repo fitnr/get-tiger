@@ -80,7 +80,7 @@ OGRFLAGS = -f $(driver.$(format)) -overwrite -dialect sqlite
 
 all:
 	@echo Available data sets:
-	@echo (run with "make DATASET")
+	@echo '(run with "make DATASET")'
 	@echo NATION - United States
 	@echo DIVISION - four very broad sections of the country
 	@echo REGION - nine broad sections of the country
