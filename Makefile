@@ -20,7 +20,7 @@ DATASETS = NATION REGION DIVISION AIANNH AITSN ANRC \
 
 # Cartographic boundary files
 # National data sets
-CARTO_NATIONAL = $(DIVISION) $(REGION) $(ANRC) $(CD)
+CARTO_NATIONAL = $(DIVISION) $(REGION) $(ANRC) $(COUNTY) $(CD)
 
 # Data sets that need to be joined w/ 'GEOID10' instead of GEOID.
 CARTO_2010 = $(UAC) $(ZCTA5)
@@ -37,7 +37,7 @@ CARTO = $(CARTO_NATIONAL) $(CARTO_2010) $(CARTO_BY_STATE) $(CARTO_2010_STATE)
 
 # National data sets
 TIGER_NATIONAL = $(AIANNH) $(AITSN) $(CNECTA) $(CBSA) \
-	$(COUNTY) $(CSA) $(METDIV) $(NECTA) $(NECTADIV) $(STATE) $(TBG)
+	$(CSA) $(METDIV) $(NECTA) $(NECTADIV) $(STATE) $(TBG)
 
 # Per-state data sets.
 TIGER_BY_STATE = $(BG) $(CONCITY) $(ELSD) \
