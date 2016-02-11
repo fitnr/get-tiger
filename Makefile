@@ -139,7 +139,7 @@ $(SHPS_2010): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 	ogr2ogr $@ /vsizip/$</$(@F) $(OGRFLAGS) \
 	-sql "SELECT *, ALAND10/1000000 LANDKM, AWATER10/1000000 WATERKM \
 	FROM $(basename $(@F)) a \
-	LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID10=b.GEOID)"
+	LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID10=b.GEOID)" 2>/dev/null
 
 SHPS = $(addprefix $(YEAR)/,$(addsuffix .$(format),$(CARTO_NATIONAL) $(CARTO_BY_STATE) $(TIGER_NATIONAL) $(TIGER_BY_STATE)))
 
@@ -148,7 +148,7 @@ $(SHPS): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 	ogr2ogr $@ /vsizip/$</$(@F) $(OGRFLAGS) \
 	-sql "SELECT *, ALAND/1000000 LANDKM, AWATER/1000000 WATERKM \
 	FROM $(basename $(@F)) \
-	LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) USING (GEOID)"
+	LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) USING (GEOID)" 2>/dev/null
 
 %.dbf: %.csv
 	ogr2ogr -f 'ESRI Shapefile' $@ $< -overwrite -dialect sqlite \

@@ -103,7 +103,7 @@ make TRACT format=shp # default
 ### Interesting tidbits
 
 * The Census API appends extra geography fields at the end of a request. For example, 'state', 'county', and 'tract' for a tract file. As part of the processing, these are converted to numbers, which reduces their usefulness. Use the GEOID field for joining.
-* The AWATER (water area) and ALAND (land area) fields are given in square meters. `ogr2ogr` has trouble with values more than nine digits long, so these will return errors. The Makefile adds LANDKM and WATERKM fields (the same data in square kilometers) to get around this issue.
+* The AWATER (water area) and ALAND (land area) fields are given in square meters. `ogr2ogr` has trouble with values more than nine digits long, so these will return errors. The Makefile adds LANDKM and WATERKM fields (the same data in square kilometers) to get around this issue. Also, get-tiger silences errors on these operations.
 * Where available, get-tiger will download the [cartographic boundary](https://www.census.gov/geo/maps-data/data/tiger-cart-boundary.html) files, rather than [Tiger/Line](https://www.census.gov/geo/maps-data/data/tiger-line.html) files. The cartographic files are clipped to the shoreline, Tiger/Line files are not.
 * Running tasks with the `--jobs` option (e.g. `make --jobs 3`) to take advantage of a fast connection and/or computer.
 * Downloading data for blockgroups requires downloading data county-by-county. This means get-tiger needs a list of all the counties in the US. A list of 2014 counties is included. If you're downloading blockgroups for other years, run `make countyfips YEAR=2525` before running `make BG`.
