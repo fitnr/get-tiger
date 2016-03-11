@@ -1,10 +1,71 @@
 # Year of census data.
 # Check API for most recent year available
+include key.ini
+
 YEAR = 2014
 
 STATE_FIPS = 01 02 04 05 06 08 09 10 11 12 13 15 16 17 18 19 20 \
 			 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 \
 			 38 39 40 41 42 44 45 46 47 48 49 50 51 53 54 55 56 72
+
+DIVISION = DIVISION/cb_$(YEAR)_us_division_5m
+NATION = NATION/cb_$(YEAR)_us_nation_5m
+REGION = REGION/cb_$(YEAR)_us_region_500k
+
+AIANNH = AIANNH/cb_$(YEAR)_us_aiannh_500k
+AITSN = AITSN/tl_$(YEAR)_us_aitsn
+ANRC = ANRC/cb_$(YEAR)_02_anrc_500k
+
+BG = $(foreach f,$(STATE_FIPS),BG/tl_$(YEAR)_$f_bg)
+CBSA = CBSA/tl_$(YEAR)_us_cbsa
+CD = CD/cb_$(YEAR)_us_cd114_500k
+CNECTA = CNECTA/tl_$(YEAR)_us_cnecta
+
+_concity_fips = 09 13 18 20 21 30 47
+CONCITY = $(addprefix CONCITY/,$(filter $(_concity_fips),$(STATE_FIPS)))
+
+COUNTY = COUNTY/cb_$(YEAR)_us_county_500k
+COUSUB = $(foreach f,$(STATE_FIPS),COUSUB/cb_$(YEAR)_$f_cousub_500k)
+CSA = CSA/tl_$(YEAR)_us_csa
+
+_elsd_fips = 60 69 04 06 09 13 17 21 23 25 26 27 29 30 33 34 36 38 40 41 44 45 47 48 50 51 55 56
+_elsds = $(filter $(_elsd_fips),$(STATE_FIPS))
+ELSD = $(addprefix ELSD/,$(foreach f,$(_elsds),tl_$(YEAR)_$f_elsd))
+
+ESTATE = ESTATE/tl_$(YEAR)_78_estate
+METDIV = METDIV/tl_$(YEAR)_us_metdiv
+MIL = MIL/tl_$(YEAR)_us_mil
+NECTA = NECTA/tl_$(YEAR)_us_necta
+NECTADIV = NECTADIV/tl_$(YEAR)_us_nectadiv
+
+PLACE = $(foreach f,$(STATE_FIPS),PLACE/cb_$(YEAR)_$f_place_500k)
+PRISECROADS = $(foreach f,$(STATE_FIPS),PRISECROADS/tl_$(YEAR)_$f_prisecroads)
+PRIMARYROADS = PRIMARYROADS/tl_$(YEAR)_us_primaryroads
+PUMA = $(foreach f,$(filter-out 60 69,$(STATE_FIPS)),PUMA/cb_$(YEAR)_$f_puma10_500k)
+RAILS = RAILS/tl_$(YEAR)_us_rails
+
+_scsd_fips = 04 06 09 13 17 21 23 25 27 30 33 34 36 40 41 44 45 47 48 50 55
+_scsds = $(filter $(_scsd_fips),$(STATE_FIPS))
+SCSD = $(addprefix SCSD/,$(foreach f,$(_scsds),tl_$(YEAR)_$f_scsd))
+
+# Remove DC and Nebraska.
+_sldls = $(filter-out 11 31,$(STATE_FIPS))
+SLDL = $(addprefix SLDL/,$(foreach f,$(_sldls),cb_$(YEAR)_$f_sldl_500k))
+
+SLDU = $(addprefix SLDU/,$(foreach f,$(STATE_FIPS),cb_$(YEAR)_$f_sldu_500k))
+
+STATE = STATE/tl_$(YEAR)_us_state
+SUBBARRIO = SUBBARRIO/tl_$(YEAR)_72_subbarrio
+
+TABBLOCK = $(foreach f,$(STATE_FIPS),TABBLOCK/tl_$(YEAR)_$f_tabblock10)
+TBG = TBG/tl_$(YEAR)_us_tbg
+TTRACT = TTRACT/tl_$(YEAR)_us_ttract
+TRACT = $(foreach f,$(STATE_FIPS),TRACT/cb_$(YEAR)_$f_tract_500k)
+
+UAC = UAC/cb_$(YEAR)_us_uac10_500k
+UNSD = $(foreach f,$(STATE_FIPS),UNSD/tl_$(YEAR)_$f_unsd)
+
+ZCTA5 = ZCTA5/cb_$(YEAR)_us_zcta510_500k
 
 CARTO_BASE = ftp://ftp2.census.gov/geo/tiger/GENZ$(YEAR)/shp
 SHP_BASE = ftp://ftp2.census.gov/geo/tiger/TIGER$(YEAR)
@@ -70,9 +131,6 @@ CURLFLAGS = --get $(API_BASE)/$(YEAR)/$(SERIES) \
 format = shp
 driver.shp  = 'ESRI Shapefile'
 driver.json = GeoJSON
-
-include geographies.ini
-include key.ini
 
 OGRFLAGS = -f $(driver.$(format)) -dialect sqlite
 
