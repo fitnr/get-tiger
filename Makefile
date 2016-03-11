@@ -10,6 +10,7 @@
 include key.ini
 
 YEAR = 2014
+export KEY YEAR
 
 STATE_FIPS = 01 02 04 05 06 08 09 10 11 12 13 15 16 17 18 19 20 \
 			 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 \
@@ -224,11 +225,14 @@ $(SHPS): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 
 # County by State files
 
-COUNTY_PREREQS = $$(foreach f,$$(shell cat counties/$(YEAR)/$$*),$(YEAR)/BG/tl_$(YEAR)_$$*_$$f_bg_$(SERIES).csv)
-$(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: counties/$(YEAR)/% $(COUNTY_PREREQS) | $$(@D)
+$(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: counties/$(YEAR)/% | $$(@D)
+	$(eval FILES= $(shell sed 's,^\(.*\)$$,$(@D)/tl_$(YEAR)_$*_\1_bg_$(SERIES).csv,' $<))
+
+	$(MAKE) $(FILES)
+
 	@rm -rf $@
-	head -1 $(lastword $^) > $@
-	for CSV in $(filter %.csv,$^); do \
+	head -1 $(lastword $(FILES)) > $@
+	for CSV in $(FILES); do \
 	tail +2 $$CSV; \
 	done >> $@
 
@@ -346,10 +350,11 @@ $(YEAR)/UNSD/tl_$(YEAR)_%_unsd_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=school+district+(unified):*' --data in=state:$*
 
 # Lists of county FIPS
+COFIPS = $(addprefix counties/$(YEAR)/,$(STATE_FIPS))
 .PHONY: countyfips
-countyfips: $(addprefix counties/$(YEAR)/,$(STATE_FIPS))
+countyfips: $(COFIPS)
 
-$(addprefix $(YEAR)/counties/,$(STATE_FIPS)): $(YEAR)/counties/%: | $$(@D)
+$(COFIPS): counties/$(YEAR)/%: | $$(@D)
 	curl --get $(API_BASE)/$(YEAR)/$(SERIES) --data key=$(KEY) \
 		--data 'for=county:*' --data in=state:$* --data get=GEOID | \
 	jq --raw-output '$(TOCSV)' | \
@@ -366,4 +371,4 @@ $(addsuffix .zip,$(addprefix $(YEAR)/,$(CARTO) $(CARTO_NODATA))): $(YEAR)/%: | $
 $(sort $(dir $(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA) $(CARTO) $(CARTO_NODATA)))): $(YEAR)
 	-mkdir $@
 
-$(YEAR) counties/$(YEAR):; -mkdir $@
+$(YEAR) counties/$(YEAR):; mkdir -p $@
