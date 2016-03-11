@@ -107,3 +107,7 @@ make TRACT format=shp # default
 * Where available, get-tiger will download the [cartographic boundary](https://www.census.gov/geo/maps-data/data/tiger-cart-boundary.html) files, rather than [Tiger/Line](https://www.census.gov/geo/maps-data/data/tiger-line.html) files. The cartographic files are clipped to the shoreline, Tiger/Line files are not.
 * Running tasks with the `--jobs` option (e.g. `make --jobs 3`) to take advantage of a fast connection and/or computer.
 * Downloading data for blockgroups requires downloading data county-by-county. This means get-tiger needs a list of all the counties in the US. A list of 2014 counties is included. If you're downloading blockgroups for other years, run `make countyfips YEAR=2525` before running `make BG`.
+
+## License
+
+Copyright 2016 Neil Freeman. Available under the GNU General Public License.

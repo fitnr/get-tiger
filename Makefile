@@ -1,3 +1,10 @@
+# This file is part of get-tiger
+# https://github.com/fitnr/get-tiger
+
+# Licensed under the GNU General Public License v3 (GPLv3) license:
+# http://opensource.org/licenses/GPL-3.0
+# Copyright (c) 2016, Neil Freeman <contact@fakeisthenewreal.org>
+
 # Year of census data.
 # Check API for most recent year available
 include key.ini
