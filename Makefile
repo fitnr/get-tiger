@@ -63,7 +63,7 @@ SLDL = $(addprefix SLDL/,$(foreach f,$(_sldls),cb_$(YEAR)_$f_sldl_500k))
 SLDU = $(addprefix SLDU/,$(foreach f,$(STATE_FIPS),cb_$(YEAR)_$f_sldu_500k))
 
 STATE = cb_$(YEAR)_us_state_500k
-SUBBARRIO = SUBBARRIO/tl_$(YEAR)_72_subbarrio
+SUBBARRIO = cb_$(YEAR)_72_subbarrio_500k
 
 TABBLOCK = $(foreach f,$(STATE_FIPS),TABBLOCK/tl_$(YEAR)_$f_tabblock10)
 TBG = TBG/tl_$(YEAR)_us_tbg
@@ -89,7 +89,7 @@ DATASETS = NATION REGION DIVISION AIANNH AITSN ANRC \
 
 # Cartographic boundary files
 # National data sets
-CARTO_NATIONAL = $(DIVISION) $(REGION) $(ANRC) $(COUNTY) $(CD) $(STATE)
+CARTO_NATIONAL = $(DIVISION) $(REGION) $(AIANNH) $(ANRC) $(COUNTY) $(CD) $(STATE)
 
 # Data sets that need to be joined w/ 'GEOID10' instead of GEOID.
 CARTO_2010 = $(UAC) $(ZCTA5)
@@ -100,12 +100,12 @@ CARTO_BY_STATE = $(COUSUB) $(PLACE) $(SLDL) $(SLDU) $(TRACT)
 # Per-state data sets that need to be joined w/ 'GEOID10' instead of GEOID.
 CARTO_2010_STATE = $(PUMA)
 
-CARTO_NODATA = $(NATION)
+CARTO_NODATA = $(NATION) $(SUBBARRIO)
 
 CARTO = $(CARTO_NATIONAL) $(CARTO_2010) $(CARTO_BY_STATE) $(CARTO_2010_STATE)
 
 # National data sets
-TIGER_NATIONAL = $(AIANNH) $(AITSN) $(CNECTA) $(CBSA) \
+TIGER_NATIONAL = $(AITSN) $(CNECTA) $(CBSA) \
 	$(CSA) $(METDIV) $(NECTA) $(NECTADIV) $(TBG)
 
 # Per-state data sets.
@@ -114,7 +114,7 @@ TIGER_BY_STATE = $(BG) $(CONCITY) $(ELSD) \
 
 # Geodata with no survey data available from the API
 TIGER_NODATA = $(ESTATE) $(MIL) $(PRIMARYROADS) $(PRISECROADS) \
-	$(RAILS) $(SUBBARRIO) $(TABBLOCK)
+	$(RAILS) $(TABBLOCK)
 
 TIGER = $(TIGER_NATIONAL) $(TIGER_BY_STATE)
 
