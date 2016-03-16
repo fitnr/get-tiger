@@ -16,6 +16,13 @@ STATE_FIPS = 01 02 04 05 06 08 09 10 11 12 13 15 16 17 18 19 20 \
 			 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 \
 			 38 39 40 41 42 44 45 46 47 48 49 50 51 53 54 55 56 72
 
+ifeq ($(wildcard counties/$(YEAR)/*),"")
+AREAWATER =
+else
+COUNTY_FIPS = $(foreach a,$(STATE_FIPS),$(addprefix $a,$(shell cat counties/$(YEAR)/$a)))
+AREAWATER = $(foreach f,$(COUNTY_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater)
+endif
+
 DIVISION = DIVISION/cb_$(YEAR)_us_division_5m
 NATION = NATION/cb_$(YEAR)_us_nation_5m
 REGION = REGION/cb_$(YEAR)_us_region_500k
@@ -81,7 +88,7 @@ API_BASE = http://api.census.gov/data
 
 SERIES = acs5
 
-DATASETS = NATION REGION DIVISION AIANNH AITSN ANRC \
+DATASETS = AREAWATER NATION REGION DIVISION AIANNH AITSN ANRC \
 	BG CBSA CD CNECTA CONCITY COUNTY COUSUB CSA ELSD \
 	ESTATE METDIV MIL NECTA NECTADIV PLACE PRISECROADS \
 	PRIMARYROADS PUMA RAILS SCSD SLDL SLDU STATE SUBBARRIO \
@@ -113,8 +120,8 @@ TIGER_BY_STATE = $(BG) $(CONCITY) $(ELSD) \
 	$(SCSD) $(TTRACT) $(UNSD)
 
 # Geodata with no survey data available from the API
-TIGER_NODATA = $(ESTATE) $(MIL) $(PRIMARYROADS) $(PRISECROADS) \
-	$(RAILS) $(TABBLOCK)
+TIGER_NODATA = $(AREAWATER) $(ESTATE) $(MIL) $(PRIMARYROADS) \
+	$(PRISECROADS) $(RAILS) $(TABBLOCK)
 
 TIGER = $(TIGER_NATIONAL) $(TIGER_BY_STATE)
 
@@ -181,6 +188,7 @@ all:
 	@echo UAC - Urbanized areas
 	@echo UNSD - Unified school districts
 	@echo ZCTA5 - Zip code tabulation areas
+	@echo AREAWATER - water. Downloads one file for each county, so run with STATE_FIPS='"x y z"'
 
 .SECONDEXPANSION:
 
