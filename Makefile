@@ -18,9 +18,12 @@ STATE_FIPS = 01 02 04 05 06 08 09 10 11 12 13 15 16 17 18 19 20 \
 
 ifeq ($(wildcard counties/$(YEAR)/*),"")
 AREAWATER =
+AREAWATERCOUNTY =
 else
 COUNTY_FIPS = $(foreach a,$(STATE_FIPS),$(addprefix $a,$(shell cat counties/$(YEAR)/$a)))
-AREAWATER = $(foreach f,$(COUNTY_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater)
+AREAWATERCOUNTY = $(foreach f,$(COUNTY_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater)
+AREAWATER = $(foreach f,$(STATE_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater)
+
 endif
 
 DIVISION = DIVISION/cb_$(YEAR)_us_division_5m
@@ -120,7 +123,7 @@ TIGER_BY_STATE = $(BG) $(CONCITY) $(ELSD) \
 	$(SCSD) $(TTRACT) $(UNSD)
 
 # Geodata with no survey data available from the API
-TIGER_NODATA = $(AREAWATER) $(ESTATE) $(MIL) $(PRIMARYROADS) \
+TIGER_NODATA = $(ESTATE) $(MIL) $(PRIMARYROADS) \
 	$(PRISECROADS) $(RAILS) $(TABBLOCK)
 
 TIGER = $(TIGER_NATIONAL) $(TIGER_BY_STATE)
@@ -230,6 +233,13 @@ $(SHPS): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 	ogrinfo $@ -sql "CREATE INDEX ON $(basename $(@F)) USING GEOID"
 
 # County by State files
+waters = $(foreach x,$(AREAWATER),$(YEAR)/$x.$(format))
+wfp := $(YEAR)/AREAWATER/tl_$(YEAR)_$$*$$x_areawater.zip
+$(waters): $(YEAR)/AREAWATER/tl_$(YEAR)_%_areawater.$(format): $$(foreach x,$$(shell cat counties/$(YEAR)/$$*),$(wfp))
+	@rm -fr $@
+	for base in $(basename $(^F)); do \
+	ogr2ogr $@ /vsizip/$(<D)/$$base.zip/$$base.shp $(OGRFLAGS) -update -append; \
+	done;
 
 $(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: counties/$(YEAR)/% | $$(@D)
 	$(eval FILES= $(shell sed 's,^\(.*\)$$,$(@D)/tl_$(YEAR)_$*_\1_bg_$(SERIES).csv,' $<))
@@ -368,7 +378,7 @@ $(COFIPS): counties/$(YEAR)/%: | $$(@D)
 
 # Download ZIP files
 
-$(addsuffix .zip,$(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA))): $(YEAR)/%: | $$(@D)
+$(addsuffix .zip,$(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA) $(AREAWATERCOUNTY))): $(YEAR)/%: | $$(@D)
 	curl -o $@ $(SHP_BASE)/$*
 
 $(addsuffix .zip,$(addprefix $(YEAR)/,$(CARTO) $(CARTO_NODATA))): $(YEAR)/%: | $$(@D)
