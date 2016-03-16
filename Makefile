@@ -377,4 +377,4 @@ $(addsuffix .zip,$(addprefix $(YEAR)/,$(CARTO) $(CARTO_NODATA))): $(YEAR)/%: | $
 $(sort $(dir $(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA) $(CARTO) $(CARTO_NODATA)))): $(YEAR)
 	-mkdir $@
 
-$(YEAR) counties/$(YEAR):; mkdir -p $@
+$(YEAR) counties/$(YEAR):; -mkdir $@
