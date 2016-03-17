@@ -23,7 +23,6 @@ else
 COUNTY_FIPS = $(foreach a,$(STATE_FIPS),$(addprefix $a,$(shell cat counties/$(YEAR)/$a)))
 AREAWATERCOUNTY = $(foreach f,$(COUNTY_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater)
 AREAWATER = $(foreach f,$(STATE_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater)
-
 endif
 
 DIVISION = DIVISION/cb_$(YEAR)_us_division_5m
@@ -148,6 +147,7 @@ format = shp
 driver.shp  = 'ESRI Shapefile'
 driver.json = GeoJSON
 
+export CPL_MAX_ERROR_REPORTS=3
 OGRFLAGS = -f $(driver.$(format)) -dialect sqlite
 
 .PHONY: all $(DATASETS)
@@ -214,7 +214,7 @@ $(SHPS_2010): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 	ogr2ogr $@ /vsizip/$</$(@F) $(OGRFLAGS) \
 	-sql "SELECT *, ALAND10/1000000 LANDKM, AWATER10/1000000 WATERKM \
 	FROM $(basename $(@F)) a \
-	LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID10=b.GEOID)" 2>/dev/null
+	LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID10=b.GEOID)"
 
 SHPS = $(addprefix $(YEAR)/,$(addsuffix .$(format),$(CARTO_NATIONAL) $(CARTO_BY_STATE) $(TIGER_NATIONAL) $(TIGER_BY_STATE)))
 
@@ -223,11 +223,11 @@ $(SHPS): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 	ogr2ogr $@ /vsizip/$</$(@F) $(OGRFLAGS) \
 	-sql "SELECT *, ALAND/1000000 LANDKM, AWATER/1000000 WATERKM \
 	FROM $(basename $(@F)) \
-	LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) USING (GEOID)" 2>/dev/null
+	LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) USING (GEOID)"
 
 %.dbf: %.csv
 	ogr2ogr -f 'ESRI Shapefile' $@ $< -overwrite -dialect sqlite \
-	-sql "SELECT GEOID $(foreach f,$(wordlist 2,100,$(DATA_FIELDS)),, CAST($f AS REAL) $f) \
+	-sql "SELECT GEOID $(foreach f,$(wordlist 2,100,$(DATA_FIELDS)),, CAST($f AS INTEGER) $f) \
 	FROM $(basename $(@F))"
 	@rm -f $(basename $@).{ind,idm}
 	ogrinfo $@ -sql "CREATE INDEX ON $(basename $(@F)) USING GEOID"
