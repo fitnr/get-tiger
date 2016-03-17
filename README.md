@@ -72,9 +72,25 @@ Note that `GEOID` must be the first field. This example will download employment
 
 You could also add these fields to `key.ini`:
 ````make
-DATA FIELDS = GEOID B24124_406E B24124_407E
+DATA_FIELDS= GEOID B24124_406E B24124_407E
 ````
 This will override the defaults in the [`Makefile`](Makefile).
+
+Sometimes you want to make summaries based on the raw data fields. For instance, you might want to divide population by land area to get population density. The variable `OUTPUT_FIELDS` can be used to add this kind of summary field.
+
+This example adds a field called `TransiteCommutePct`, which is produced by dividing `B08101_025E` (estimated number of workers who commuted by transit) by the `B08101_001E` (estimated number of workers)
+```
+OUTPUT_FIELDS= B08101_025 / B08101_001 AS TransiteCommutePct,
+```
+
+Note that in the expression, the `E` is dropped from the variable names, a limitation of the DBF format. Also, the expression must end in a comma.
+
+Another example:
+```
+OUTPUT_FIELDS= B01003_001/(ALAND/1000000.) AS PopDensityKm,
+```
+
+The field `B01003_001` is population. The census calls it `B01003_001E`, but has been shortened to 10 characters. We divide it by `ALAND/1000000.`, because the `ALAND` field is given in meters. The `AS PopDensityKm` gives the name of the new field. Finally, it must end with a comma (`,`).
 
 ### Vintage
 

@@ -1,142 +1,142 @@
-[
-  {
-    "label": "Median income in the past 12 months --!!Total:",
-    "concept": "B06011. Median Income in the Past 12 Months (in 2014 Inflation-Adjusted Dollars) by Place of Birth in the United States",
-    "predicateType": "int"
-  },
-  {
-    "label": "Median monthly housing costs",
-    "concept": "B25105.  MEDIAN MONTHLY HOUSING COSTS (DOLLARS)",
-    "predicateType": "int"
-  },
-  {
-    "label": "Median year structure built",
-    "concept": "B25035.  MEDIAN YEAR STRUCTURE BUILT",
-    "predicateType": "int"
-  },
-  {
-    "label": "Total",
-    "concept": "B01003.  Total Population",
-    "predicateType": "int"
-  },
-  {
-    "label": "Total",
-    "concept": "B25001.  Housing Units",
-    "predicateType": "int"
-  },
-  {
-    "label": "Occupied",
-    "concept": "B25002.  Occupancy Status",
-    "predicateType": "int"
-  },
-  {
-    "label": "Vacant",
-    "concept": "B25002.  Occupancy Status",
-    "predicateType": "int"
-  },
-  {
-    "label": "Total:",
-    "concept": "B25003.  Tenure",
-    "predicateType": "int"
-  },
-  {
-    "label": "Owner occupied",
-    "concept": "B25003.  Tenure",
-    "predicateType": "int"
-  },
-  {
-    "label": "Renter occupied",
-    "concept": "B25003.  Tenure",
-    "predicateType": "int"
-  },
-  {
-    "label": "Total:",
-    "concept": "B08101.  MEANS OF TRANSPORTATION TO WORK BY AGE",
-    "predicateType": "int"
-  },
-  {
-    "label": "Car, truck, or van - drove alone:",
-    "concept": "B08101.  MEANS OF TRANSPORTATION TO WORK BY AGE",
-    "predicateType": "int"
-  },
-  {
-    "label": "Car, truck, or van - carpooled:",
-    "concept": "B08101.  MEANS OF TRANSPORTATION TO WORK BY AGE",
-    "predicateType": "int"
-  },
-  {
-    "label": "Public transportation (excluding taxicab):",
-    "concept": "B08101.  MEANS OF TRANSPORTATION TO WORK BY AGE",
-    "predicateType": "int"
-  },
-  {
-    "label": "Walked:",
-    "concept": "B08101.  MEANS OF TRANSPORTATION TO WORK BY AGE",
-    "predicateType": "int"
-  },
-  {
-    "label": "Taxicab, motorcycle, bicycle, or other means:",
-    "concept": "B08101.  MEANS OF TRANSPORTATION TO WORK BY AGE",
-    "predicateType": "int"
-  },
-  {
-    "label": "Worked at home:",
-    "concept": "B08101.  MEANS OF TRANSPORTATION TO WORK BY AGE",
-    "predicateType": "int"
-  },
-  {
-    "label": "Total:",
-    "concept": "B25024.  Units in Structure",
-    "predicateType": "int"
-  },
-  {
-    "label": "1, detached",
-    "concept": "B25024.  Units in Structure",
-    "predicateType": "int"
-  },
-  {
-    "label": "1, attached",
-    "concept": "B25024.  Units in Structure",
-    "predicateType": "int"
-  },
-  {
-    "label": "2",
-    "concept": "B25024.  Units in Structure",
-    "predicateType": "int"
-  },
-  {
-    "label": "3 or 4",
-    "concept": "B25024.  Units in Structure",
-    "predicateType": "int"
-  },
-  {
-    "label": "5 to 9",
-    "concept": "B25024.  Units in Structure",
-    "predicateType": "int"
-  },
-  {
-    "label": "10 to 19",
-    "concept": "B25024.  Units in Structure",
-    "predicateType": "int"
-  },
-  {
-    "label": "20 to 49",
-    "concept": "B25024.  Units in Structure",
-    "predicateType": "int"
-  },
-  {
-    "label": "50 or more",
-    "concept": "B25024.  Units in Structure",
-    "predicateType": "int"
-  },
-  {
-    "label": "Mobile home",
-    "concept": "B25024.  Units in Structure",
-    "predicateType": "int"
-  },
-  {
-    "label": "Boat, RV, van, etc.",
-    "concept": "B25024.  Units in Structure",
-    "predicateType": "int"
-  }
-]
+{
+    "B01003_001E": {
+        "label": "Total",
+        "concept": "B01003.  Total Population",
+        "predicateType": "int"
+    },
+    "B06011_001E": {
+        "label": "Median income in the past 12 months --!!Total:",
+        "concept": "B06011. Median Income in the Past 12 Months (in 2014 Inflation-Adjusted Dollars) by Place of Birth in the United States",
+        "predicateType": "int"
+    },
+    "B08101_001E": {
+        "label": "Total:",
+        "concept": "B08101.  MEANS OF TRANSPORTATION TO WORK BY AGE",
+        "predicateType": "int"
+    },
+    "B08101_009E": {
+        "label": "Car, truck, or van - drove alone:",
+        "concept": "B08101.  MEANS OF TRANSPORTATION TO WORK BY AGE",
+        "predicateType": "int"
+    },
+    "B08101_017E": {
+        "label": "Car, truck, or van - carpooled:",
+        "concept": "B08101.  MEANS OF TRANSPORTATION TO WORK BY AGE",
+        "predicateType": "int"
+    },
+    "B08101_025E": {
+        "label": "Public transportation (excluding taxicab):",
+        "concept": "B08101.  MEANS OF TRANSPORTATION TO WORK BY AGE",
+        "predicateType": "int"
+    },
+    "B08101_033E": {
+        "label": "Walked:",
+        "concept": "B08101.  MEANS OF TRANSPORTATION TO WORK BY AGE",
+        "predicateType": "int"
+    },
+    "B08101_041E": {
+        "label": "Taxicab, motorcycle, bicycle, or other means:",
+        "concept": "B08101.  MEANS OF TRANSPORTATION TO WORK BY AGE",
+        "predicateType": "int"
+    },
+    "B08101_049E": {
+        "label": "Worked at home:",
+        "concept": "B08101.  MEANS OF TRANSPORTATION TO WORK BY AGE",
+        "predicateType": "int"
+    },
+    "B25001_001E": {
+        "label": "Total",
+        "concept": "B25001.  Housing Units",
+        "predicateType": "int"
+    },
+    "B25002_002E": {
+        "label": "Occupied",
+        "concept": "B25002.  Occupancy Status",
+        "predicateType": "int"
+    },
+    "B25002_003E": {
+        "label": "Vacant",
+        "concept": "B25002.  Occupancy Status",
+        "predicateType": "int"
+    },
+    "B25003_001E": {
+        "label": "Total:",
+        "concept": "B25003.  Tenure",
+        "predicateType": "int"
+    },
+    "B25003_002E": {
+        "label": "Owner occupied",
+        "concept": "B25003.  Tenure",
+        "predicateType": "int"
+    },
+    "B25003_003E": {
+        "label": "Renter occupied",
+        "concept": "B25003.  Tenure",
+        "predicateType": "int"
+    },
+    "B25024_001E": {
+        "label": "Total:",
+        "concept": "B25024.  Units in Structure",
+        "predicateType": "int"
+    },
+    "B25024_002E": {
+        "label": "1, detached",
+        "concept": "B25024.  Units in Structure",
+        "predicateType": "int"
+    },
+    "B25024_003E": {
+        "label": "1, attached",
+        "concept": "B25024.  Units in Structure",
+        "predicateType": "int"
+    },
+    "B25024_004E": {
+        "label": "2",
+        "concept": "B25024.  Units in Structure",
+        "predicateType": "int"
+    },
+    "B25024_005E": {
+        "label": "3 or 4",
+        "concept": "B25024.  Units in Structure",
+        "predicateType": "int"
+    },
+    "B25024_006E": {
+        "label": "5 to 9",
+        "concept": "B25024.  Units in Structure",
+        "predicateType": "int"
+    },
+    "B25024_008E": {
+        "label": "20 to 49",
+        "concept": "B25024.  Units in Structure",
+        "predicateType": "int"
+    },
+    "B25024_007E": {
+        "label": "10 to 19",
+        "concept": "B25024.  Units in Structure",
+        "predicateType": "int"
+    },
+    "B25024_009E": {
+        "label": "50 or more",
+        "concept": "B25024.  Units in Structure",
+        "predicateType": "int"
+    },
+    "B25024_010E": {
+        "label": "Mobile home",
+        "concept": "B25024.  Units in Structure",
+        "predicateType": "int"
+    },
+    "B25024_011E": {
+        "label": "Boat, RV, van, etc.",
+        "concept": "B25024.  Units in Structure",
+        "predicateType": "int"
+    },
+    "B25035_001E": {
+        "label": "Median year structure built",
+        "concept": "B25035.  MEDIAN YEAR STRUCTURE BUILT",
+        "predicateType": "int"
+    },
+    "B25105_001E": {
+        "label": "Median monthly housing costs",
+        "concept": "B25105.  MEDIAN MONTHLY HOUSING COSTS (DOLLARS)",
+        "predicateType": "int"
+    }
+}
