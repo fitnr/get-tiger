@@ -79,7 +79,7 @@ TBG = TBG/tl_$(YEAR)_us_tbg
 TTRACT = TTRACT/tl_$(YEAR)_us_ttract
 TRACT = $(foreach f,$(STATE_FIPS),TRACT/cb_$(YEAR)_$f_tract_500k)
 
-UAC = UAC/cb_$(YEAR)_us_uac10_500k
+UAC = UAC/cb_$(YEAR)_us_ua10_500k
 UNSD = $(foreach f,$(STATE_FIPS),UNSD/tl_$(YEAR)_$f_unsd)
 
 ZCTA5 = ZCTA5/cb_$(YEAR)_us_zcta510_500k
@@ -138,6 +138,10 @@ DATA_FIELDS ?= GEOID B06011_001E B25105_001E B25035_001E B01003_001E \
 OUTPUT_FIELDS ?= ROUND(B01003_001/(ALAND/1000000.), 2) AS PopDensKm, \
 	ROUND(B25001_001/(ALAND/1000000.), 2) AS HuDensKm, \
 	ROUND(B08101_001/B01003_001, 2) AS WrkForcPct,
+
+OUTPUT_FIELDS_10 ?= ROUND(B01003_001 / (ALAND10 / 1000000.), 2) AS PopDensKm, \
+	ROUND(B25001_001 / (ALAND10 / 1000000.), 2) AS HuDensKm, \
+	ROUND(B08101_001 / B01003_001, 2) AS WrkForcPct,
 
 CENSUS_DATA_FIELDS = $(subst $( ) $( ),$(comma),$(DATA_FIELDS))
 
@@ -211,7 +215,16 @@ $(NODATA): $(YEAR)/%.$(format): $(YEAR)/%.zip
 	unzip -oqd $(@D) $<
 	@touch $@
 
-SHPS_2010 = $(addprefix $(YEAR)/,$(addsuffix .$(format),$(CARTO_2010) $(CARTO_2010_STATE)))
+$(addprefix $(YEAR)/,$(addsuffix .$(format),$(CARTO_2010))): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
+	@rm -f $@
+	ogr2ogr $@ /vsizip/$</$(@F) $(OGRFLAGS) \
+	-sql "SELECT *, \
+	$(OUTPUT_FIELDS_10) \
+	ROUND(ALAND10/1000000., 6) LANDKM, ROUND(AWATER10/1000000., 6) WATERKM \
+	FROM $(basename $(@F)) a \
+	LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID10=b.GEOID)"
+
+SHPS_2010 = $(addprefix $(YEAR)/,$(addsuffix .$(format),$(CARTO_2010_STATE)))
 
 $(SHPS_2010): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 	@rm -f $@
