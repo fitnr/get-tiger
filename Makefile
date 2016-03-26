@@ -208,6 +208,14 @@ all:
 $(DATASETS): $$(addprefix $(YEAR)/,$$(addsuffix .$(format),$$($$@)))
 	@echo $^
 
+merge = BG CONCITY COUNTY_WITHIN_UA COUSUB ELSD PLACE PRISECROADS PUMA SCSD SLDL SLDU TABBLOCK TRACT UNSD
+
+$(foreach x,$(merge),$(YEAR)/$x.$(format)): $(YEAR)/%.$(format): $$(foreach x,$$($$*),$(YEAR)/$$x.$(format)) | $(YEAR)
+	@rm -rf $@
+	for f in $(basename $(^F)); do \
+	ogr2ogr $@ $(<D)/$$f.$(format) -update -append; \
+	done;
+
 # Merge shp and acs data, e.g:
 # 2014/AIANNH/tl_2014_us_aiannh.shp: 2014/AIANNH/tl_2014_us_aiannh.zip 2014/AIANNH/tl_2014_us_aiannh_acs5.csv
 
