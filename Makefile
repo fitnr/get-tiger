@@ -46,8 +46,7 @@ COUNTY_WITHIN_UA = $(foreach f,$(STATE_FIPS),COUNTY_WITHIN_UA/cb_$(YEAR)_$f_coun
 CSA = CSA/tl_$(YEAR)_us_csa
 
 _elsd_fips = 60 69 04 06 09 13 17 21 23 25 26 27 29 30 33 34 36 38 40 41 44 45 47 48 50 51 55 56
-_elsds = $(filter $(_elsd_fips),$(STATE_FIPS))
-ELSD = $(addprefix ELSD/,$(foreach f,$(_elsds),tl_$(YEAR)_$f_elsd))
+ELSD = $(foreach f,$(filter $(_elsd_fips),$(STATE_FIPS)),ELSD/tl_$(YEAR)_$f_elsd)
 
 ESTATE = ESTATE/tl_$(YEAR)_78_estate
 METDIV = METDIV/tl_$(YEAR)_us_metdiv
@@ -63,16 +62,15 @@ RAILS = RAILS/tl_$(YEAR)_us_rails
 
 _scsd_fips = 04 06 09 13 17 21 23 25 27 30 33 34 36 40 41 44 45 47 48 50 55
 _scsds = $(filter $(_scsd_fips),$(STATE_FIPS))
-SCSD = $(addprefix SCSD/,$(foreach f,$(_scsds),tl_$(YEAR)_$f_scsd))
+SCSD = $(foreach f,$(_scsds),SCSD/tl_$(YEAR)_$f_scsd)
 
 # Remove DC and Nebraska.
-_sldls = $(filter-out 11 31,$(STATE_FIPS))
-SLDL = $(addprefix SLDL/,$(foreach f,$(_sldls),cb_$(YEAR)_$f_sldl_500k))
+SLDL = $(foreach f,$(filter-out 11 31,$(STATE_FIPS)),SLDL/cb_$(YEAR)_$f_sldl_500k)
 
-SLDU = $(addprefix SLDU/,$(foreach f,$(STATE_FIPS),cb_$(YEAR)_$f_sldu_500k))
+SLDU = $(foreach f,$(STATE_FIPS),SLDU/cb_$(YEAR)_$f_sldu_500k)
 
-STATE = cb_$(YEAR)_us_state_500k
-SUBBARRIO = cb_$(YEAR)_72_subbarrio_500k
+STATE = STATE/cb_$(YEAR)_us_state_500k
+SUBBARRIO = SUBBARRIO/cb_$(YEAR)_72_subbarrio_500k
 
 TABBLOCK = $(foreach f,$(STATE_FIPS),TABBLOCK/tl_$(YEAR)_$f_tabblock10)
 TBG = TBG/tl_$(YEAR)_us_tbg
