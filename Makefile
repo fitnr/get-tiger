@@ -43,6 +43,7 @@ CONCITY = $(addprefix CONCITY/,$(filter $(_concity_fips),$(STATE_FIPS)))
 
 COUNTY = COUNTY/cb_$(YEAR)_us_county_500k
 COUSUB = $(foreach f,$(STATE_FIPS),COUSUB/cb_$(YEAR)_$f_cousub_500k)
+COUNTY_WITHIN_UA = $(foreach f,$(STATE_FIPS),COUNTY_WITHIN_UA/cb_$(YEAR)_$f_county_within_ua_500k)
 CSA = CSA/tl_$(YEAR)_us_csa
 
 _elsd_fips = 60 69 04 06 09 13 17 21 23 25 26 27 29 30 33 34 36 38 40 41 44 45 47 48 50 51 55 56
@@ -91,8 +92,8 @@ API_BASE = http://api.census.gov/data
 SERIES = acs5
 
 DATASETS = AREAWATER NATION REGION DIVISION AIANNH AITSN ANRC \
-	BG CBSA CD CNECTA CONCITY COUNTY COUSUB CSA ELSD \
-	ESTATE METDIV MIL NECTA NECTADIV PLACE PRISECROADS \
+	BG CBSA CD CNECTA CONCITY COUNTY COUNTY_WITHIN_UA COUSUB CSA \
+	ELSD ESTATE METDIV MIL NECTA NECTADIV PLACE PRISECROADS \
 	PRIMARYROADS PUMA RAILS SCSD SLDL SLDU STATE SUBBARRIO \
 	TABBLOCK TBG TTRACT TRACT UAC UNSD ZCTA5
 
@@ -109,7 +110,7 @@ CARTO_BY_STATE = $(COUSUB) $(PLACE) $(SLDL) $(SLDU) $(TRACT)
 # Per-state data sets that need to be joined w/ 'GEOID10' instead of GEOID.
 CARTO_2010_STATE = $(PUMA)
 
-CARTO_NODATA = $(NATION) $(SUBBARRIO)
+CARTO_NODATA = $(NATION) $(SUBBARRIO) $(COUNTY_WITHIN_UA)
 
 CARTO = $(CARTO_NATIONAL) $(CARTO_2010) $(CARTO_BY_STATE) $(CARTO_2010_STATE)
 
@@ -175,6 +176,7 @@ all:
 	@echo CD - Congressional districts 
 	@echo CONCITY - Consolidated cities 
 	@echo COUNTY - Counties
+	@echo COUNTY_WITHIN_UA - Urban areas segmented by county
 	@echo COUSUB - County subvidisions
 	@echo CSA - Consolidated statistical areas
 	@echo ELSD - Elementary school districts
