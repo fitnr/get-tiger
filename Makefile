@@ -38,8 +38,7 @@ CBSA = CBSA/tl_$(YEAR)_us_cbsa
 CD = CD/cb_$(YEAR)_us_cd114_500k
 CNECTA = CNECTA/tl_$(YEAR)_us_cnecta
 
-_concity_fips = 09 13 18 20 21 30 47
-CONCITY = $(addprefix CONCITY/,$(filter $(_concity_fips),$(STATE_FIPS)))
+CONCITY = $(foreach f,09 13 18 20 21 30 47,CONCITY/tl_2014_$f_concity)
 
 COUNTY = COUNTY/cb_$(YEAR)_us_county_500k
 COUSUB = $(foreach f,$(STATE_FIPS),COUSUB/cb_$(YEAR)_$f_cousub_500k)
