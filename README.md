@@ -126,12 +126,36 @@ make TRACT SERIES=acs1
 ```
 (This isn't tested for all data series, but should work.)
 
+### Secret bonus tasks for merging data
+
+A relatively common task is to download a national set of geographies of a certain type. Run this to download a national dataset of block groups: 
+```bash
+make 2014/BG.shp
+```
+
+You can add in options for different `DATA_FIELDS` as described above. To run this task for a different year, you'll need to change the year twice (`make 2013/BG.shp YEAR=2013`).
+
+Get-tiger includes shortcut tasks like this for the following geographies. They all follow the same pattern (`2014/<NAME>.shp`):
+
+* blockgroups (`BG`)
+* consolidated cities (`CONCITY`)
+* counties within urban areas (`COUNTY_WITHIN_UA`)
+* county subdivisions (`COUSUB`)
+* school districts (`UNSD`, `ELSD` and `SCSD`)
+* places (`PLACE`)
+* primary/secondary roads (`PRISECROADS`)
+* public use microdata areas (`PUMA`)
+* state legislative districts (`SLDL`, `SLDU`)
+* blocks (`TABBLOCK`)
+* census tracts (`TRACT`) 
+
 ### Format
 
 By default, this thing spits out Shapefiles. To get GeoJSON, set `format` to `json`:
 ````bash
 make TRACT format=json
 make TRACT format=shp # default
+make 2014/COUSUB.json format=json
 ````
 
 ## Integration
