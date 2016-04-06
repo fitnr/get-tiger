@@ -1,25 +1,41 @@
 # Get tiger
 
-A `make`-based tool for downloading Census [Tiger Line](http://www.census.gov/geo/maps-data/data/tiger.html) Shapefiles and automatically joining them to data downloaded from the [Census API](http://www.census.gov/data/developers/data-sets.html). This Makefile does is automatically.
+A `make`-based tool for downloading Census [Tiger Line](http://www.census.gov/geo/maps-data/data/tiger.html) Shapefiles and automatically joining them to data downloaded from the [Census API](http://www.census.gov/data/developers/data-sets.html). If you want to make maps with US Census data, but find downloading it a pain, this is for you.
+
+Get-tiger uses `make`, a tried-and-true tool for processing series of files, to quickly download Census geodata and survey data, then join them. Then you have Shapefiles (or GeoJSON) ready to use in your favorite GIS.
 
 ## Requirements
 
-* ogr2ogr ([GDAL](http://www.gdal.org)) (v1.10+)
-* [jq](https://stedolan.github.io/jq) (v1.5+)
+* Make (tested with GNU Make 3.81, other versions should work fine)
+* `ogr2ogr` ([GDAL](http://www.gdal.org)) (v1.10+)
+* [JQ](https://stedolan.github.io/jq) (v1.5+)
 
-On OS X, install [Homebrew](http://brew.sh) and run: `brew install gdal jq`.
+GDAL is an open-source geospatial library that includes `ogr2ogr`, a commmand-line tool for modifying GIS data.
+JQ is a command-line tool for working with JSON data, the format the Census API uses.
+
+OS X:
+* install make with: `xcode-select --install`.
+* For GDAL and JQ, install [Homebrew](http://brew.sh) and run: `brew install gdal jq`.
+
+Windows:
+* [Download make here](http://gnuwin32.sourceforge.net/packages/make.htm)
+* Install [OSGeo4W](http://trac.osgeo.org/osgeo4w/) to get GDAL
+* [Download JQ](https://stedolan.github.io/jq/download/)
+
+Linux (CentOS):
+* `sudo apt-get install build-essential g++ libgdal1-dev gdal-bin jq`
 
 ## Install
 
-* Download the repo and put the contents in the folder you would like to fill with GIS data.
+* Download or clone the repo and put the contents in the folder you would like to fill with GIS data.
 * Get a [Census API key](http://api.census.gov/data/key_signup.html) (yes, it's pretty bare-bones).
 * Put that key in `key_example.ini`, and rename it `key.ini`.
 
 ## Use
 
-Running `make` will produce a list of Census geographies available for download.
+Running `make` will produce a list of Census geographies available for download:
 ```bash
-> make
+make
 Available data sets:
 Download with make DATASET
 NATION - United States
@@ -38,7 +54,7 @@ make COUNTY TRACT
 
 Make will run the commands to download the shapefiles and data from the Census, then join them. You'll see the commands run on your screen, sit back and enjoy the show. The files will end up in a directory called `2014/`. At the end, you'll get a list of the files created, e.g.:
 ```bash
-> make NATION STATE
+make NATION STATE
 ...
 2014/NATION/cb_2014_us_nation_5m.shp 2014/STATE/tl_2014_us_state.shp
 ```
@@ -63,12 +79,14 @@ You may find a [list of state fips codes](https://en.wikipedia.org/wiki/Federal_
 
 A current weakness is that data is downloaded with no data dictionary, and cryptic field names. I've included a data dictionary ([data.json](data.json)) for the default fields.
 
-To download different data, see the [Census API documentation](http://www.census.gov/data/developers/data-sets/acs-survey-5-year-data.html) for a complete list. Make your selection, then run:
+To download different data, see the [Census API documentation](http://www.census.gov/data/developers/data-sets/acs-survey-5-year-data.html) for a complete list. You must select each field separately. Due to the way the Census API is set up, one cannot just download an entire table.
+
+Make your selection, then run it, e.g.:
 
 ````bash
 make STATE DATA_FIELDS="GEOID B24124_406E B24124_407E"
 ````
-Note that `GEOID` must be the first field. This example will download employment figures for commercial divers and locksmiths.
+Note that `GEOID` must be the first field. This example will download state-level geodata and employment figures for commercial divers and locksmiths.
 
 You could also add these fields to `key.ini`:
 ````make
@@ -83,7 +101,7 @@ This example adds a field called `TransiteCommutePct`, which is produced by divi
 OUTPUT_FIELDS= B08101_025 / B08101_001 AS TransiteCommutePct,
 ```
 
-Note that in the expression, the `E` is dropped from the variable names, a limitation of the DBF format. Also, the expression must end in a comma.
+Note that in the expression, the `E` is dropped from the variable names. This is due to a limitation of the Shape format - only the first 10 letters of field names are used. Also, the expression must end in a comma.
 
 Another example:
 ```
@@ -116,12 +134,31 @@ make TRACT format=json
 make TRACT format=shp # default
 ````
 
-### Interesting tidbits
+## Integration
 
-* The Census API appends extra geography fields at the end of a request. For example, 'state', 'county', and 'tract' for a tract file. As part of the processing, these are converted to numbers, which reduces their usefulness. Use the GEOID field for joining.
-* The AWATER (water area) and ALAND (land area) fields are given in square meters. `ogr2ogr` has trouble with values more than nine digits long, so these will return errors. The Makefile adds LANDKM and WATERKM fields (the same data in square kilometers) to get around this issue. Also, get-tiger silences errors on these operations.
-* Where available, get-tiger will download the [cartographic boundary](https://www.census.gov/geo/maps-data/data/tiger-cart-boundary.html) files, rather than [Tiger/Line](https://www.census.gov/geo/maps-data/data/tiger-line.html) files. The cartographic files are clipped to the shoreline, Tiger/Line files are not.
-* Running tasks with the `--jobs` option (e.g. `make --jobs 3`) to take advantage of a fast connection and/or computer.
+`Get-tiger` will integrate well with just about any workflow. For instance, here's a basic make recipe to automatically download the repository and then get data county-level data:
+
+```makefile
+# Census API key
+export KEY=12345 
+# chosen data fields
+export DATA_FIELDS="GEOID B24124_406E B24124_407E"
+
+# If you do this, you should probably fork the repository and clone your fork
+census-data:
+	git clone --single-branch https://github.com/fitnr/get-tiger.git census-data
+	touch census-data/key.ini # You'll need to create the key.ini file to prevent an error
+	$(MAKE) -C census-data COUNTY
+```
+
+Your data will be available in `census-data/2014/COUNTY`. These steps can be readily performed by the scripting language of your choice.
+
+## Interesting tidbits
+
+* The Census API appends extra geography fields at the end of a request. For example, 'state', 'county', and 'tract' for a tract file. As part of the processing, these are converted to numeric values, which reduces their usefulness. Use the GEOID field for joining.
+* The AWATER (water area) and ALAND (land area) fields are given in square meters. The Shapefile format has trouble with values more than nine digits long, so these will trigger warnings in `ogrogr`. The Makefile adds LANDKM and WATERKM fields (the same data in square kilometers) to get around this issue. Also, `get-tiger` squelches the warning messages on these operations.
+* Where available, get-tiger will download the [cartographic boundary](https://www.census.gov/geo/maps-data/data/tiger-cart-boundary.html) files, rather than [Tiger/Line](https://www.census.gov/geo/maps-data/data/tiger-line.html) files. The cartographic files are clipped to the shoreline, Tiger/Line files are not. If you would prefer the Tiger/Line files, open an issue and I'll add a way to download them.
+* Run tasks with the `--jobs` option (e.g. `make --jobs 3`) to take advantage of a fast connection and/or computer.
 * Downloading data for blockgroups requires downloading data county-by-county. This means get-tiger needs a list of all the counties in the US. A list of 2014 counties is included. If you're downloading blockgroups for other years, run `make countyfips YEAR=2525` before running `make BG`.
 
 ## License
