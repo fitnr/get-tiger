@@ -6,24 +6,21 @@ Get-tiger uses `make`, a tried-and-true tool for processing series of files, to 
 
 ## Requirements
 
-* Make (tested with GNU Make 3.81, other versions should work fine)
+* Make (tested with GNU make 3.81, other versions should work fine)
 * `ogr2ogr` ([GDAL](http://www.gdal.org)) (v1.10+)
-* [JQ](https://stedolan.github.io/jq) (v1.5+)
 
-GDAL is an open-source geospatial library that includes `ogr2ogr`, a commmand-line tool for modifying GIS data.
-JQ is a command-line tool for working with JSON data, the format the Census API uses.
+GDAL is an open-source geospatial library that includes `ogr2ogr`, a commmand-line tool for modifying GIS data. We'll be using it to join CSVs to Shapefiles.
 
 OS X:
 * install make with: `xcode-select --install`.
-* For GDAL and JQ, install [Homebrew](http://brew.sh) and run: `brew install gdal jq`.
+* For GDAL, install [Homebrew](http://brew.sh) and run: `brew install gdal`.
 
 Windows:
-* [Download make here](http://gnuwin32.sourceforge.net/packages/make.htm)
+* Download [make](http://gnuwin32.sourceforge.net/packages/make.htm)
 * Install [OSGeo4W](http://trac.osgeo.org/osgeo4w/) to get GDAL
-* [Download JQ](https://stedolan.github.io/jq/download/)
 
 Linux (CentOS):
-* `sudo apt-get install build-essential g++ libgdal1-dev gdal-bin jq`
+* `sudo apt-get install build-essential g++ libgdal1-dev gdal-bin`
 
 ## Install
 
@@ -96,9 +93,9 @@ This will override the defaults in the [`Makefile`](Makefile).
 
 Sometimes you want to make summaries based on the raw data fields. For instance, you might want to divide population by land area to get population density. The variable `OUTPUT_FIELDS` can be used to add this kind of summary field.
 
-This example adds a field called `TransiteCommutePct`, which is produced by dividing `B08101_025E` (estimated number of workers who commuted by transit) by the `B08101_001E` (estimated number of workers)
+This example adds a field called `TransitCommutePct`, which is produced by dividing `B08101_025E` (estimated number of workers who commuted by transit) by the `B08101_001E` (estimated number of workers)
 ```
-OUTPUT_FIELDS= B08101_025 / B08101_001 AS TransiteCommutePct,
+OUTPUT_FIELDS= B08101_025 / B08101_001 AS TransitCommutePct,
 ```
 
 Note that in the expression, the `E` is dropped from the variable names. This is due to a limitation of the Shape format - only the first 10 letters of field names are used. Also, the expression must end in a comma.

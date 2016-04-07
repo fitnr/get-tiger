@@ -280,16 +280,17 @@ $(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: counties/$(YEAR)/% | $$(@D)
 	tail +2 $$CSV; \
 	done >> $@
 
-# Census API has a strange CSV-like format, includes "YY000US" prefix on GEOID.
-TOCSV = ([.[0]] + ( \
-			.[1:] | map( \
-				[ .[0] | sub("^[0-9]+US"; "") ] + .[1:] \
-			) \
-		)) | \
-	.[] | @csv
+# Census API json has a strange CSV-like format, includes "YY000US" prefix on GEOID.
+# Luckily, this makes it fairly easy to brute force into CSV
+TOCSV = 's/,null,/,,/g; \
+	s/"//g; \
+	s/\[//g; \
+	s/\]//g; \
+	s/,$$//g; \
+	s/^[0-9]*US//'
 
 %.csv: %.json
-	jq --raw-output '$(TOCSV)' $< > $@
+	sed $(TOCSV) $< > $@
 
 # Download ACS data
 
@@ -401,8 +402,8 @@ countyfips: $(COFIPS)
 $(COFIPS): counties/$(YEAR)/%: | $$(@D)
 	curl --get $(API_BASE)/$(YEAR)/$(SERIES) --data key=$(KEY) \
 		--data 'for=county:*' --data in=state:$* --data get=GEOID | \
-	jq --raw-output '$(TOCSV)' | \
-	sed 's/"//g' | cut -d, -f3 | tail +2 > $@
+	sed $(TOCSV) | \
+	cut -d, -f3 | tail +2 > $@
 
 # Download ZIP files
 
