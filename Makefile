@@ -403,7 +403,11 @@ $(COFIPS): counties/$(YEAR)/%: | $$(@D)
 	curl --get $(API_BASE)/$(YEAR)/$(SERIES) --data key=$(KEY) \
 		--data 'for=county:*' --data in=state:$* --data get=GEOID | \
 	sed $(TOCSV) | \
-	cut -d, -f3 | tail +2 > $@
+	cut -d, -f3 | \
+	sed 's/$$/ /g' | \
+	tr -d '\n' | \
+	fold -s \
+	> $@
 
 # Download ZIP files
 
