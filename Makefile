@@ -270,8 +270,7 @@ $(waters): $(YEAR)/AREAWATER/tl_$(YEAR)_%_areawater.$(format): $$(foreach x,$$(s
 	done;
 
 $(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: counties/$(YEAR)/% | $$(@D)
-	$(eval FILES= $(shell sed 's,^\(.*\)$$,$(@D)/tl_$(YEAR)_$*_\1_bg_$(SERIES).csv,' $<))
-
+	$(eval FILES= $(shell sed 's,\([0-9][0-9]*\),$(@D)/tl_$(YEAR)_$*_\1_bg_$(SERIES).csv,g' $<))
 	$(MAKE) $(FILES)
 
 	@rm -rf $@
