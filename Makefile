@@ -270,14 +270,14 @@ $(waters): $(YEAR)/AREAWATER/tl_$(YEAR)_%_areawater.$(format): $$(foreach x,$$(s
 	done;
 
 $(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: counties/$(YEAR)/% | $$(@D)
-	$(eval FILES= $(shell sed 's,\([0-9][0-9]*\),$(@D)/tl_$(YEAR)_$*_\1_bg_$(SERIES).csv,g' $<))
-	$(MAKE) $(FILES)
+	$(eval COUNTIES=$(shell cat $<))
+	$(MAKE) $(foreach x,$(COUNTIES),$(@D)/tl_$(YEAR)_$*_$x_bg_$(SERIES).csv)
 
 	@rm -rf $@
-	head -1 $(lastword $(FILES)) > $@
-	for CSV in $(FILES); do \
-	tail +2 $$CSV; \
-	done >> $@
+	head -1 $(@D)/tl_$(YEAR)_$*_$(lastword $(COUNTIES))_bg_$(SERIES).csv > $@
+	for COUNTY in $(FILES); do \
+		tail +2 $(@D)/tl_$(YEAR)_$*_$${COUNTY}_bg_$(SERIES).csv; \
+		done >> $@
 
 # Census API json has a strange CSV-like format, includes "YY000US" prefix on GEOID.
 # Luckily, this makes it fairly easy to brute force into CSV
