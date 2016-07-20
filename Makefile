@@ -19,10 +19,14 @@ STATE_FIPS = 01 02 04 05 06 08 09 10 11 12 13 15 16 17 18 19 20 \
 ifeq ($(wildcard counties/$(YEAR)/*),"")
 AREAWATER =
 AREAWATERCOUNTY =
+LINEARWATER =
+LINEARWATERCOUNTY =
 else
 COUNTY_FIPS = $(foreach a,$(STATE_FIPS),$(addprefix $a,$(shell cat counties/$(YEAR)/$a)))
 AREAWATERCOUNTY = $(foreach f,$(COUNTY_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater)
 AREAWATER = $(foreach f,$(STATE_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater)
+LINEARWATER = $(foreach f,$(STATE_FIPS),LINEARWATER/tl_$(YEAR)_$f_linearwater)
+LINEARWATERCOUNTY = $(foreach f,$(COUNTY_FIPS),LINEARWATER/tl_$(YEAR)_$f_linearwater)
 endif
 
 DIVISION = DIVISION/cb_$(YEAR)_us_division_5m
@@ -90,7 +94,7 @@ SERIES = acs5
 
 DATASETS = AREAWATER NATION REGION DIVISION AIANNH AITSN ANRC \
 	BG CBSA CD CNECTA CONCITY COUNTY COUNTY_WITHIN_UA COUSUB CSA \
-	ELSD ESTATE METDIV MIL NECTA NECTADIV PLACE PRISECROADS \
+	ELSD ESTATE LINEARWATER METDIV MIL NECTA NECTADIV PLACE PRISECROADS \
 	PRIMARYROADS PUMA RAILS SCSD SLDL SLDU STATE SUBBARRIO \
 	TABBLOCK TBG TTRACT TRACT UAC UNSD ZCTA5
 
@@ -261,13 +265,22 @@ $(SHPS): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 	ogrinfo $@ -sql "CREATE INDEX ON $(basename $(@F)) USING GEOID"
 
 # County by State files
-waters = $(foreach x,$(AREAWATER),$(YEAR)/$x.$(format))
-wfp := $(YEAR)/AREAWATER/tl_$(YEAR)_$$*$$x_areawater.zip
-$(waters): $(YEAR)/AREAWATER/tl_$(YEAR)_%_areawater.$(format): $$(foreach x,$$(shell cat counties/$(YEAR)/$$*),$(wfp))
-	@rm -fr $@
-	for base in $(basename $(^F)); do \
+counties = $$(shell cat counties/$(YEAR)/$$*)
+combinecountyfiles = for base in $(basename $(^F)); do \
 	ogr2ogr $@ /vsizip/$(<D)/$$base.zip/$$base.shp $(OGRFLAGS) -update -append; \
 	done;
+
+areawaters = $(foreach x,$(AREAWATER),$(YEAR)/$x.$(format))
+awfp := $(YEAR)/AREAWATER/tl_$(YEAR)_$$*$$x_areawater.zip
+$(areawaters): $(YEAR)/AREAWATER/tl_$(YEAR)_%_areawater.$(format): $$(foreach x,$(counties),$(awfp))
+	@rm -fr $@
+	$(combinecountyfiles)
+
+linearwaters = $(foreach x,$(LINEARWATER),$(YEAR)/$x.$(format))
+lwfp := $(YEAR)/LINEARWATER/tl_$(YEAR)_$$*$$x_linearwater.zip
+$(linearwaters): $(YEAR)/LINEARWATER/tl_$(YEAR)_%_linearwater.$(format): $$(foreach x,$(counties),$(lwfp))
+	@rm -fr $@
+	$(combinecountyfiles)
 
 $(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: counties/$(YEAR)/% | $$(@D)
 	$(eval COUNTIES=$(shell cat $<))
@@ -410,7 +423,7 @@ $(COFIPS): counties/$(YEAR)/%: | $$(@D)
 
 # Download ZIP files
 
-$(addsuffix .zip,$(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA) $(AREAWATERCOUNTY))): $(YEAR)/%: | $$(@D)
+$(addsuffix .zip,$(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA) $(AREAWATERCOUNTY) $(LINEARWATERCOUNTY))): $(YEAR)/%: | $$(@D)
 	curl -o $@ $(SHP_BASE)/$*
 
 $(addsuffix .zip,$(addprefix $(YEAR)/,$(CARTO) $(CARTO_NODATA))): $(YEAR)/%: | $$(@D)
