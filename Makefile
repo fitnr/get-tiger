@@ -330,7 +330,7 @@ $(YEAR)/$(ANRC)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=alaska+native+regional+corporation:*'
 
 $(YEAR)/$(CD)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=congressional+district:*' --data in=state:$*
+	$(CURL) --data 'for=congressional+district:*'
 
 $(YEAR)/$(CBSA)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=metropolitan+statistical+area/micropolitan+statistical+area:*'
