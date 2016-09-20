@@ -425,13 +425,11 @@ COFIPS = $(addprefix counties/$(YEAR)/,$(STATE_FIPS))
 .PHONY: countyfips
 countyfips: $(COFIPS)
 
-$(COFIPS): counties/$(YEAR)/%: | $$(@D)
-	curl --get $(API_BASE)/$(YEAR)/$(SERIES) --data key=$(KEY) \
-		--data 'for=county:*' --data in=state:$* --data get=GEOID | \
-	sed $(TOCSV) | \
-	cut -d, -f3 | \
-	sed 's/$$/ /g' | \
-	tr -d '\n' | \
+$(COFIPS): counties/$(YEAR)/%: $(YEAR)/COUNTY/tl_$(YEAR)_us_county.zip | $$(@D)
+	ogr2ogr -f CSV /dev/stdout /vsizip/$</$(basename $(<F)).shp \
+	    -where "STATEFP='$*'" -select COUNTYFP | \
+	tail -n+2 | \
+	xargs | \
 	fold -s \
 	> $@
 
