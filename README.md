@@ -134,17 +134,31 @@ You can add in options for different `DATA_FIELDS` as described above. To run th
 
 Get-tiger includes shortcut tasks like this for the following geographies. They all follow the same pattern (`2014/<NAME>.shp`):
 
-* blockgroups (`BG`)
+* American Indian / Alaska Native Areas / Hawaiian Home Lands (`AIANNH`, `AITSN`, `ANRC`)
+* block groups and tribal block groups (`BG`, `TBG`)
+* blocks (`TABBLOCK`)
+* census tracts and tribal census tracts (`TRACT`, `TTRACT`)
+* congressional districts (`CD`)
 * consolidated cities (`CONCITY`)
+* counties (`COUNTY`)
 * counties within urban areas (`COUNTY_WITHIN_UA`)
 * county subdivisions (`COUSUB`)
-* school districts (`UNSD`, `ELSD` and `SCSD`)
+* metropolitan areas (`CBSA`, `CSA`, `METDIV`)
+* military bases (`MIL`)
+* New England stuff (`CNECTA`, `NECTA`, `NECTADIV`)
 * places (`PLACE`)
 * primary/secondary roads (`PRISECROADS`)
 * public use microdata areas (`PUMA`)
+* Puerto-Rico-specific subdivisions (`ESTATE`, `SUBBARRIO`)
+* railroads (`RAILS`)
+* roads, primary roads and primary plus secondary roads (`ROADS`, `PRIMARYROADS`, `PRISECROADS`)
+* school districts (`UNSD`, `ELSD` and `SCSD`)
+* states (`STATE`)
 * state legislative districts (`SLDL`, `SLDU`)
-* blocks (`TABBLOCK`)
-* census tracts (`TRACT`) 
+* urbanized areas (`UAC`)
+* water (`AREAWATER`, `LINEARWATER`)
+* zip code tabulations areas (`ZCTA5`)
+* high-level subdivisions (`NATION`, `DIVISION`, `REGION`)
 
 ### Format
 
