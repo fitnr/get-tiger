@@ -21,12 +21,16 @@ AREAWATER =
 AREAWATERCOUNTY =
 LINEARWATER =
 LINEARWATERCOUNTY =
+ROADS =
+ROADSCOUNTY =
 else
 COUNTY_FIPS = $(foreach a,$(STATE_FIPS),$(addprefix $a,$(shell cat counties/$(YEAR)/$a)))
 AREAWATERCOUNTY = $(foreach f,$(COUNTY_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater)
 AREAWATER = $(foreach f,$(STATE_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater)
 LINEARWATER = $(foreach f,$(STATE_FIPS),LINEARWATER/tl_$(YEAR)_$f_linearwater)
 LINEARWATERCOUNTY = $(foreach f,$(COUNTY_FIPS),LINEARWATER/tl_$(YEAR)_$f_linearwater)
+ROADS = $(foreach f,$(STATE_FIPS),ROADS/tl_$(YEAR)_$f_roads)
+ROADSCOUNTY = $(foreach f,$(COUNTY_FIPS),ROADS/tl_$(YEAR)_$f_roads)
 endif
 
 DIVISION = DIVISION/cb_$(YEAR)_us_division_5m
@@ -95,7 +99,7 @@ SERIES = acs5
 DATASETS = AREAWATER NATION REGION DIVISION AIANNH AITSN ANRC \
 	BG CBSA CD CNECTA CONCITY COUNTY COUNTY_WITHIN_UA COUSUB CSA \
 	ELSD ESTATE LINEARWATER METDIV MIL NECTA NECTADIV PLACE PRISECROADS \
-	PRIMARYROADS PUMA RAILS SCSD SLDL SLDU STATE SUBBARRIO \
+	PRIMARYROADS PUMA RAILS ROADS SCSD SLDL SLDU STATE SUBBARRIO \
 	TABBLOCK TBG TTRACT TRACT UAC UNSD ZCTA5
 
 # Cartographic boundary files
@@ -125,7 +129,8 @@ TIGER_BY_STATE = $(BG) $(CONCITY) $(ELSD) \
 
 # Geodata with no survey data available from the API
 TIGER_NODATA = $(ESTATE) $(MIL) $(PRIMARYROADS) \
-	$(PRISECROADS) $(RAILS) $(TABBLOCK)
+	$(PRISECROADS) $(RAILS) $(ROADSCOUNTY) $(TABBLOCK) \
+	$(AREAWATERCOUNTY) $(LINEARWATERCOUNTY)
 
 TIGER = $(TIGER_NATIONAL) $(TIGER_BY_STATE)
 
@@ -190,6 +195,8 @@ all:
 	@echo PRIMARYROADS - Primary roads [national]
 	@echo PRISECROADS - Primary and secondary roads [by state]
 	@echo PUMA - Public use microdata areas
+	@echo RAILS - Railroads
+	@echo ROADS - Roads. Downloads one file for each county, then combines into state files.
 	@echo SCSD - Secondary school districts 
 	@echo SLDL - State legislative districts [lower chamber]
 	@echo SLDU - State legislative districts [upper chamber]
@@ -202,7 +209,8 @@ all:
 	@echo UAC - Urbanized areas
 	@echo UNSD - Unified school districts
 	@echo ZCTA5 - Zip code tabulation areas
-	@echo AREAWATER - water. Downloads one file for each county, so run with STATE_FIPS='"x y z"'
+	@echo AREAWATER - Water polygons. Downloads one file for each county, then combines into state files.
+	@echo LINEARWATER - Water lines. Downloads one file for each county, then combines into state files.
 
 .SECONDEXPANSION:
 
@@ -279,6 +287,12 @@ $(areawaters): $(YEAR)/AREAWATER/tl_$(YEAR)_%_areawater.$(format): $$(foreach x,
 linearwaters = $(foreach x,$(LINEARWATER),$(YEAR)/$x.$(format))
 lwfp := $(YEAR)/LINEARWATER/tl_$(YEAR)_$$*$$x_linearwater.zip
 $(linearwaters): $(YEAR)/LINEARWATER/tl_$(YEAR)_%_linearwater.$(format): $$(foreach x,$(counties),$(lwfp))
+	@rm -fr $@
+	$(combinecountyfiles)
+
+roads = $(foreach x,$(ROADS),$(YEAR)/$x.$(format))
+rdfp := $(YEAR)/ROADS/tl_$(YEAR)_$$*$$x_roads.zip
+$(roads): $(YEAR)/ROADS/tl_$(YEAR)_%_roads.$(format): $$(foreach x,$(counties),$(rdfp))
 	@rm -fr $@
 	$(combinecountyfiles)
 
@@ -423,7 +437,7 @@ $(COFIPS): counties/$(YEAR)/%: | $$(@D)
 
 # Download ZIP files
 
-$(addsuffix .zip,$(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA) $(AREAWATERCOUNTY) $(LINEARWATERCOUNTY))): $(YEAR)/%: | $$(@D)
+$(addsuffix .zip,$(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA))): $(YEAR)/%: | $$(@D)
 	curl -o $@ $(SHP_BASE)/$*
 
 $(addsuffix .zip,$(addprefix $(YEAR)/,$(CARTO) $(CARTO_NODATA))): $(YEAR)/%: | $$(@D)
