@@ -302,7 +302,7 @@ $(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: counties/$(YEAR)/% | $$(@D)
 
 	@rm -rf $@
 	head -1 $(@D)/tl_$(YEAR)_$*_$(lastword $(COUNTIES))_bg_$(SERIES).csv > $@
-	for COUNTY in $(FILES); do \
+	for COUNTY in $(COUNTIES); do \
 		tail +2 $(@D)/tl_$(YEAR)_$*_$${COUNTY}_bg_$(SERIES).csv; \
 		done >> $@
 
