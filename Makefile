@@ -12,25 +12,39 @@ include key.ini
 YEAR = 2014
 export KEY YEAR
 
+comma = ,
 STATE_FIPS = 01 02 04 05 06 08 09 10 11 12 13 15 16 17 18 19 20 \
 			 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 \
 			 38 39 40 41 42 44 45 46 47 48 49 50 51 53 54 55 56 72
 
+CARTO_BASE = ftp://ftp2.census.gov/geo/tiger/GENZ$(YEAR)/shp
+SHP_BASE = ftp://ftp2.census.gov/geo/tiger/TIGER$(YEAR)
+API_BASE = http://api.census.gov/data
+
+SERIES = acs5
+
+DATASETS = AREAWATER NATION REGION DIVISION AIANNH AITSN ANRC \
+	BG CBSA CD CNECTA CONCITY COUNTY COUNTY_WITHIN_UA COUSUB CSA \
+	ELSD ESTATE LINEARWATER METDIV MIL NECTA NECTADIV PLACE PRISECROADS \
+	PRIMARYROADS PUMA RAILS ROADS SCSD SLDL SLDU STATE SUBBARRIO \
+	TABBLOCK TBG TTRACT TRACT UAC UNSD ZCTA5
+
 ifeq ($(wildcard counties/$(YEAR)/*),"")
-AREAWATER =
-AREAWATERCOUNTY =
-LINEARWATER =
-LINEARWATERCOUNTY =
-ROADS =
-ROADSCOUNTY =
+    AREAWATER =
+    AREAWATERCOUNTY =
+    LINEARWATER =
+    LINEARWATERCOUNTY =
+    ROADS =
+    ROADSCOUNTY =
+
 else
-COUNTY_FIPS = $(foreach a,$(STATE_FIPS),$(addprefix $a,$(shell cat counties/$(YEAR)/$a)))
-AREAWATERCOUNTY = $(foreach f,$(COUNTY_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater)
-AREAWATER = $(foreach f,$(STATE_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater)
-LINEARWATER = $(foreach f,$(STATE_FIPS),LINEARWATER/tl_$(YEAR)_$f_linearwater)
-LINEARWATERCOUNTY = $(foreach f,$(COUNTY_FIPS),LINEARWATER/tl_$(YEAR)_$f_linearwater)
-ROADS = $(foreach f,$(STATE_FIPS),ROADS/tl_$(YEAR)_$f_roads)
-ROADSCOUNTY = $(foreach f,$(COUNTY_FIPS),ROADS/tl_$(YEAR)_$f_roads)
+    COUNTY_FIPS = $(foreach a,$(STATE_FIPS),$(addprefix $a,$(shell cat counties/$(YEAR)/$a)))
+    AREAWATERCOUNTY = $(foreach f,$(COUNTY_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater)
+    AREAWATER = $(foreach f,$(STATE_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater)
+    LINEARWATER = $(foreach f,$(STATE_FIPS),LINEARWATER/tl_$(YEAR)_$f_linearwater)
+    LINEARWATERCOUNTY = $(foreach f,$(COUNTY_FIPS),LINEARWATER/tl_$(YEAR)_$f_linearwater)
+    ROADS = $(foreach f,$(STATE_FIPS),ROADS/tl_$(YEAR)_$f_roads)
+    ROADSCOUNTY = $(foreach f,$(COUNTY_FIPS),ROADS/tl_$(YEAR)_$f_roads)
 endif
 
 DIVISION = DIVISION/cb_$(YEAR)_us_division_5m
@@ -90,18 +104,6 @@ UNSD = $(foreach f,$(STATE_FIPS),UNSD/tl_$(YEAR)_$f_unsd)
 
 ZCTA5 = ZCTA5/cb_$(YEAR)_us_zcta510_500k
 
-CARTO_BASE = ftp://ftp2.census.gov/geo/tiger/GENZ$(YEAR)/shp
-SHP_BASE = ftp://ftp2.census.gov/geo/tiger/TIGER$(YEAR)
-API_BASE = http://api.census.gov/data
-
-SERIES = acs5
-
-DATASETS = AREAWATER NATION REGION DIVISION AIANNH AITSN ANRC \
-	BG CBSA CD CNECTA CONCITY COUNTY COUNTY_WITHIN_UA COUSUB CSA \
-	ELSD ESTATE LINEARWATER METDIV MIL NECTA NECTADIV PLACE PRISECROADS \
-	PRIMARYROADS PUMA RAILS ROADS SCSD SLDL SLDU STATE SUBBARRIO \
-	TABBLOCK TBG TTRACT TRACT UAC UNSD ZCTA5
-
 # Cartographic boundary files
 # National data sets
 CARTO_NATIONAL = $(DIVISION) $(REGION) $(AIANNH) $(ANRC) $(COUNTY) $(CD) $(STATE)
@@ -134,7 +136,6 @@ TIGER_NODATA = $(ESTATE) $(MIL) $(PRIMARYROADS) \
 
 TIGER = $(TIGER_NATIONAL) $(TIGER_BY_STATE)
 
-comma = ,
 
 DATA_FIELDS ?= GEOID B06011_001E B25105_001E B25035_001E B01003_001E \
 	B25001_001E B25002_002E B25002_003E B25003_001E B25003_002E B25003_003E \
@@ -222,10 +223,10 @@ $(DATASETS): $$(addprefix $(YEAR)/,$$(addsuffix .$(format),$$($$@)))
 
 merge = BG CONCITY COUNTY_WITHIN_UA COUSUB ELSD PLACE PRISECROADS PUMA SCSD SLDL SLDU TABBLOCK TRACT UNSD
 
-$(foreach x,$(merge),$(YEAR)/$x.$(format)): $(YEAR)/%.$(format): $$(foreach x,$$($$*),$(YEAR)/$$x.$(format)) | $(YEAR)
+$(foreach x,$(merge),$(YEAR)/$x.$(format)): $(YEAR)/%.$(format): $$(foreach x,$$($$*),$(YEAR)/$$x.$(format))
 	@rm -rf $@
 	for f in $(basename $(^F)); do \
-	ogr2ogr $@ $(<D)/$$f.$(format) -update -append; \
+	    ogr2ogr $@ $(<D)/$$f.$(format) -update -append; \
 	done;
 
 # Merge shp and acs data, e.g:
@@ -241,37 +242,37 @@ $(addprefix $(YEAR)/,$(addsuffix .$(format),$(CARTO_2010))): $(YEAR)/%.$(format)
 	@rm -f $@
 	ogr2ogr $@ /vsizip/$</$(@F) $(OGRFLAGS) \
 	-sql "SELECT *, \
-	$(OUTPUT_FIELDS_10) \
-	ROUND(ALAND10/1000000., 6) LANDKM, ROUND(AWATER10/1000000., 6) WATERKM \
-	FROM $(basename $(@F)) a \
-	LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID10=b.GEOID)"
+	    $(OUTPUT_FIELDS_10) \
+	    ROUND(ALAND10/1000000., 6) LANDKM, ROUND(AWATER10/1000000., 6) WATERKM \
+	    FROM $(basename $(@F)) a \
+	    LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID10=b.GEOID)"
 
 SHPS_2010 = $(addprefix $(YEAR)/,$(addsuffix .$(format),$(CARTO_2010_STATE)))
 
 $(SHPS_2010): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 	@rm -f $@
 	ogr2ogr $@ /vsizip/$</$(@F) $(OGRFLAGS) \
-	-sql "SELECT *, \
-	$(OUTPUT_FIELDS) \
-	ROUND(ALAND/1000000., 6) LANDKM, ROUND(AWATER/1000000., 6) WATERKM \
-	FROM $(basename $(@F)) a \
-	LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID10=b.GEOID)"
+	    -sql "SELECT *, \
+	    $(OUTPUT_FIELDS) \
+	    ROUND(ALAND/1000000., 6) LANDKM, ROUND(AWATER/1000000., 6) WATERKM \
+	    FROM $(basename $(@F)) a \
+	    LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID10=b.GEOID)"
 
 SHPS = $(addprefix $(YEAR)/,$(addsuffix .$(format),$(CARTO_NATIONAL) $(CARTO_BY_STATE) $(TIGER_NATIONAL) $(TIGER_BY_STATE)))
 
 $(SHPS): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 	@rm -f $@
 	ogr2ogr $@ /vsizip/$</$(@F) $(OGRFLAGS) \
-	-sql "SELECT *, \
-	$(OUTPUT_FIELDS) \
-	ROUND(ALAND/1000000., 2) as LANDKM, ROUND(AWATER/1000000., 2) as WATERKM \
-	FROM $(basename $(@F)) \
-	LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) USING (GEOID)"
+	    -sql "SELECT *, \
+	    $(OUTPUT_FIELDS) \
+	    ROUND(ALAND/1000000., 2) as LANDKM, ROUND(AWATER/1000000., 2) as WATERKM \
+	    FROM $(basename $(@F)) \
+	    LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) USING (GEOID)"
 
 %.dbf: %.csv
 	ogr2ogr -f 'ESRI Shapefile' $@ $< -overwrite -dialect sqlite \
-	-sql "SELECT GEOID $(foreach f,$(wordlist 2,100,$(DATA_FIELDS)),, CAST($f AS INTEGER) $f) \
-	FROM $(basename $(@F))"
+	    -sql "SELECT GEOID $(foreach f,$(wordlist 2,100,$(DATA_FIELDS)),, CAST($f AS INTEGER) $f) \
+	    FROM $(basename $(@F))"
 	@rm -f $(basename $@).{ind,idm}
 	ogrinfo $@ -sql "CREATE INDEX ON $(basename $(@F)) USING GEOID"
 
