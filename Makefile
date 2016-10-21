@@ -12,6 +12,8 @@ include key.ini
 YEAR = 2014
 CONGRESS = 114
 
+include counties/$(YEAR).ini
+
 export KEY YEAR
 
 comma = ,
@@ -59,7 +61,7 @@ ifeq ($(wildcard counties/$(YEAR)/*),"")
     ROADSCOUNTY =
 
 else
-    COUNTY_FIPS = $(foreach a,$(STATE_FIPS),$(addprefix $a,$(shell cat counties/$(YEAR)/$a)))
+    COUNTY_FIPS = $(foreach a,$(STATE_FIPS),$(addprefix $a,$(COUNTIES_$(a))))
     AREAWATERCOUNTY = $(foreach f,$(COUNTY_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater)
     AREAWATER = $(foreach f,$(STATE_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater)
     LINEARWATER = $(foreach f,$(STATE_FIPS),LINEARWATER/tl_$(YEAR)_$f_linearwater)
@@ -298,38 +300,34 @@ $(SHPS): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 	sed 's/^GEOID/"String"/; s/,[A-Za-z0-9_]*/,"Integer"/g' > $@
 
 # County by State files
-counties = $$(shell cat counties/$(YEAR)/$$*)
 combinecountyfiles = for base in $(basename $(^F)); do \
 	ogr2ogr $@ /vsizip/$(<D)/$$base.zip/$$base.shp $(OGRFLAGS) -update -append; \
 	done;
 
 areawaters = $(foreach x,$(AREAWATER),$(YEAR)/$x.$(format))
 awfp := $(YEAR)/AREAWATER/tl_$(YEAR)_$$*$$x_areawater.zip
-$(areawaters): $(YEAR)/AREAWATER/tl_$(YEAR)_%_areawater.$(format): $$(foreach x,$(counties),$(awfp))
-	@rm -fr $@
+$(areawaters): $(YEAR)/AREAWATER/tl_$(YEAR)_%_areawater.$(format): $$(foreach x,$$(COUNTIES_$$*),$(awfp))
+	@rm -f $@
 	$(combinecountyfiles)
 
 linearwaters = $(foreach x,$(LINEARWATER),$(YEAR)/$x.$(format))
 lwfp := $(YEAR)/LINEARWATER/tl_$(YEAR)_$$*$$x_linearwater.zip
-$(linearwaters): $(YEAR)/LINEARWATER/tl_$(YEAR)_%_linearwater.$(format): $$(foreach x,$(counties),$(lwfp))
-	@rm -fr $@
+$(linearwaters): $(YEAR)/LINEARWATER/tl_$(YEAR)_%_linearwater.$(format): $$(foreach x,$$(COUNTIES_$$*),$(lwfp))
+	@rm -f $@
 	$(combinecountyfiles)
 
 roads = $(foreach x,$(ROADS),$(YEAR)/$x.$(format))
 rdfp := $(YEAR)/ROADS/tl_$(YEAR)_$$*$$x_roads.zip
-$(roads): $(YEAR)/ROADS/tl_$(YEAR)_%_roads.$(format): $$(foreach x,$(counties),$(rdfp))
-	@rm -fr $@
+$(roads): $(YEAR)/ROADS/tl_$(YEAR)_%_roads.$(format): $$(foreach x,$$(COUNTIES_$$*),$(rdfp))
+	@rm -f $@
 	$(combinecountyfiles)
 
-$(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: counties/$(YEAR)/% | $$(@D)
-	$(eval COUNTIES=$(shell cat $<))
-	$(MAKE) $(foreach x,$(COUNTIES),$(@D)/tl_$(YEAR)_$*_$x_bg_$(SERIES).csv)
-
-	@rm -rf $@
-	head -1 $(@D)/tl_$(YEAR)_$*_$(lastword $(COUNTIES))_bg_$(SERIES).csv > $@
-	for COUNTY in $(COUNTIES); do \
-		tail +2 $(@D)/tl_$(YEAR)_$*_$${COUNTY}_bg_$(SERIES).csv; \
-		done >> $@
+$(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: $$(foreach x,$$(COUNTIES_$$*),$$(@D)/tl_$(YEAR)_$$*_$$x_$(SERIES).csv) | $$(@D)
+	@rm -f $@
+	head -n1 $< > $@
+	for COUNTY in $(COUNTIES_$*); do \
+	    tail -n+2 $(@D)/tl_$(YEAR)_$*_$${COUNTY}_bg_$(SERIES).csv; \
+	done >> $@
 
 # Census API json has a strange CSV-like format, includes "YY000US" prefix on GEOID.
 # Luckily, this makes it fairly easy to brute force into CSV
@@ -344,6 +342,12 @@ TOCSV = 's/,null,/,,/g; \
 	sed $(TOCSV) $< > $@
 
 # Download ACS data
+
+# County by state
+
+# e.g. 2014/BG/36_047_acs5.json
+$(foreach s,$(STATE_FIPS),$(foreach c,$(COUNTIES_$(s)),$(YEAR)/BG/tl_$(YEAR)_$(s)_$(c)_$(SERIES).json)): $(YEAR)/BG/tl_$(YEAR)_%_$(SERIES).json: | $$(@D)
+	$(CURL) --data for='block+group:*' --data in=state:$(firstword $(subst _, ,$*))+county:$(lastword $(subst _, ,$*))
 
 # Carto boundary files
 
@@ -407,12 +411,6 @@ $(YEAR)/$(UAC)_$(SERIES).json: | $$(@D)
 $(YEAR)/$(ZCTA5)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=zip+code+tabulation+area:*'
 
-# County by state
-
-# e.g. 2014/BG/36_047_acs5.json
-$(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).json: | $$(@D)
-	$(CURL) --data for='block+group:*' --data in=state:$(firstword $(subst _, ,$*))+county:$(lastword $(subst _, ,$*))
-
 # State by state files
 
 $(YEAR)/CONCITY/tl_$(YEAR)_%_concity_$(SERIES).json: | $$(@D)
@@ -445,18 +443,13 @@ $(YEAR)/$(call base,TRACT,%,tract)_$(SERIES).json: | $$(@D)
 $(YEAR)/UNSD/tl_$(YEAR)_%_unsd_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=school+district+(unified):*' --data in=state:$*
 
-# Lists of county FIPS
-COFIPS = $(addprefix counties/$(YEAR)/,$(STATE_FIPS))
-.PHONY: countyfips
-countyfips: $(COFIPS)
-
-$(COFIPS): counties/$(YEAR)/%: $(YEAR)/COUNTY/tl_$(YEAR)_us_county.zip | $$(@D)
-	ogr2ogr -f CSV /dev/stdout /vsizip/$</$(basename $(<F)).shp \
-	    -where "STATEFP='$*'" -select COUNTYFP | \
+# INI files with lists of county FIPS
+counties/$(YEAR).ini: $(YEAR)/$(COUNTY).zip | counties
+	ogr2ogr /dev/stdout /vsizip/$< -dialect sqlite -f CSV \
+	    -sql "SELECT 'COUNTIES_' || STATEFP, group_concat(COUNTYFP, ' ') \
+	    FROM $(basename $(<F)) GROUP BY STATEFP" | \
 	tail -n+2 | \
-	xargs | \
-	fold -s \
-	> $@
+	sed 's/,/ = /g' > $@
 
 # Download ZIP files
 
@@ -469,4 +462,4 @@ $(addsuffix .zip,$(addprefix $(YEAR)/,$(CARTO) $(CARTO_NODATA))): $(YEAR)/%: | $
 $(sort $(dir $(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA) $(CARTO) $(CARTO_NODATA)))): $(YEAR)
 	-mkdir $@
 
-$(YEAR) counties/$(YEAR):; -mkdir $@
+$(YEAR) counties: ; -mkdir $@
