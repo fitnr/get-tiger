@@ -72,6 +72,13 @@ make PLACE STATE_FIPS="11 24 51"
 
 You may find a [list of state fips codes](https://en.wikipedia.org/wiki/Federal_Information_Processing_Standard_state_code) handy.
 
+## Which maps
+
+The Census publishes two sets of map data: [Cartographic Boundary](http://www.census.gov/geo/maps-data/data/tiger-cart-boundary.html) files and [TIGER/Line](http://www.census.gov/geo/maps-data/data/tiger-line.html). The main difference is that cartographic boundaries files are clipped to the coastline. These are the default for `get-tiger`. To always fetch TIGER/Line files, set `CARTOGRAPHIC=false`:
+```
+make TRACT CARTOGRAPHIC=false
+```
+
 ## What data
 
 A current weakness is that data is downloaded with no data dictionary, and cryptic field names. I've included a data dictionary ([data.json](data.json)) for the default fields.

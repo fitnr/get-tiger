@@ -10,6 +10,8 @@
 include key.ini
 
 YEAR = 2014
+CONGRESS = 114
+
 export KEY YEAR
 
 comma = ,
@@ -29,6 +31,25 @@ DATASETS = AREAWATER NATION REGION DIVISION AIANNH AITSN ANRC \
 	PRIMARYROADS PUMA RAILS ROADS SCSD SLDL SLDU STATE SUBBARRIO \
 	TABBLOCK TBG TTRACT TRACT UAC UNSD ZCTA5
 
+# Some files can be drawn from the cartographic boundary or tiger datasets.
+# Default is cartographic.
+CARTOGRAPHIC ?= true
+
+ifeq ($(CARTOGRAPHIC),true)
+    base = $(1)/cb_$(YEAR)_$(2)_$(3)_500k
+
+    carto_national = $(AIANNH) $(ANRC) $(COUNTY) $(CD) $(STATE)
+    CARTO_BY_STATE = $(COUSUB) $(PLACE) $(SLDL) $(SLDU) $(TRACT)
+    carto_nodata = $(SUBBARRIO)
+
+else
+    base = $(1)/tl_$(YEAR)_$(2)_$(3)
+
+    tiger_national = $(AIANNH) $(ANRC) $(COUNTY) $(CD) $(STATE)
+    tiger_by_state = $(COUSUB) $(PLACE) $(SLDL) $(SLDU) $(TRACT)
+    tiger_nodata = $(SUBBARRIO)
+endif
+
 ifeq ($(wildcard counties/$(YEAR)/*),"")
     AREAWATER =
     AREAWATERCOUNTY =
@@ -47,23 +68,24 @@ else
     ROADSCOUNTY = $(foreach f,$(COUNTY_FIPS),ROADS/tl_$(YEAR)_$f_roads)
 endif
 
+# general file definitions
 DIVISION = DIVISION/cb_$(YEAR)_us_division_5m
 NATION = NATION/cb_$(YEAR)_us_nation_5m
 REGION = REGION/cb_$(YEAR)_us_region_500k
 
-AIANNH = AIANNH/cb_$(YEAR)_us_aiannh_500k
+AIANNH = $(call base,AIANNH,us,aiannh)
 AITSN = AITSN/tl_$(YEAR)_us_aitsn
-ANRC = ANRC/cb_$(YEAR)_02_anrc_500k
+ANRC = $(call base,ANRC,02,anrc)
 
 BG = $(foreach f,$(STATE_FIPS),BG/tl_$(YEAR)_$f_bg)
 CBSA = CBSA/tl_$(YEAR)_us_cbsa
-CD = CD/cb_$(YEAR)_us_cd114_500k
+CD = $(call base,CD,us,cd$(CONGRESS))
 CNECTA = CNECTA/tl_$(YEAR)_us_cnecta
 
 CONCITY = $(foreach f,09 13 18 20 21 30 47,CONCITY/tl_2014_$f_concity)
 
-COUNTY = COUNTY/cb_$(YEAR)_us_county_500k
-COUSUB = $(foreach f,$(STATE_FIPS),COUSUB/cb_$(YEAR)_$f_cousub_500k)
+COUNTY = $(call base,COUNTY,us,county)
+COUSUB = $(foreach f,$(STATE_FIPS),$(call base,COUSUB,$f,cousub))
 COUNTY_WITHIN_UA = $(foreach f,$(STATE_FIPS),COUNTY_WITHIN_UA/cb_$(YEAR)_$f_county_within_ua_500k)
 CSA = CSA/tl_$(YEAR)_us_csa
 
@@ -76,7 +98,7 @@ MIL = MIL/tl_$(YEAR)_us_mil
 NECTA = NECTA/tl_$(YEAR)_us_necta
 NECTADIV = NECTADIV/tl_$(YEAR)_us_nectadiv
 
-PLACE = $(foreach f,$(STATE_FIPS),PLACE/cb_$(YEAR)_$f_place_500k)
+PLACE = $(foreach f,$(STATE_FIPS),$(call base,PLACE,$(f),place))
 PRISECROADS = $(foreach f,$(STATE_FIPS),PRISECROADS/tl_$(YEAR)_$f_prisecroads)
 PRIMARYROADS = PRIMARYROADS/tl_$(YEAR)_us_primaryroads
 PUMA = $(foreach f,$(filter-out 60 69,$(STATE_FIPS)),PUMA/cb_$(YEAR)_$f_puma10_500k)
@@ -87,55 +109,51 @@ _scsds = $(filter $(_scsd_fips),$(STATE_FIPS))
 SCSD = $(foreach f,$(_scsds),SCSD/tl_$(YEAR)_$f_scsd)
 
 # Remove DC and Nebraska.
-SLDL = $(foreach f,$(filter-out 11 31,$(STATE_FIPS)),SLDL/cb_$(YEAR)_$f_sldl_500k)
+SLDL = $(foreach f,$(filter-out 11 31,$(STATE_FIPS)),$(call base,SLDL,$(f),sldl))
 
-SLDU = $(foreach f,$(STATE_FIPS),SLDU/cb_$(YEAR)_$f_sldu_500k)
+SLDU = $(foreach f,$(STATE_FIPS),$(call base,SLDU,$(f),sldu))
+STATE = $(call base,STATE,us,state)
+SUBBARRIO = $(call base,SUBBARRIO,72,subbarrio)
 
-STATE = STATE/cb_$(YEAR)_us_state_500k
-SUBBARRIO = SUBBARRIO/cb_$(YEAR)_72_subbarrio_500k
 
 TABBLOCK = $(foreach f,$(STATE_FIPS),TABBLOCK/tl_$(YEAR)_$f_tabblock10)
 TBG = TBG/tl_$(YEAR)_us_tbg
 TTRACT = TTRACT/tl_$(YEAR)_us_ttract
-TRACT = $(foreach f,$(STATE_FIPS),TRACT/cb_$(YEAR)_$f_tract_500k)
+TRACT = $(foreach f,$(STATE_FIPS),$(call base,TRACT,$(f),tract))
 
 UAC = UAC/cb_$(YEAR)_us_ua10_500k
 UNSD = $(foreach f,$(STATE_FIPS),UNSD/tl_$(YEAR)_$f_unsd)
 
 ZCTA5 = ZCTA5/cb_$(YEAR)_us_zcta510_500k
 
-# Cartographic boundary files
-# National data sets
-CARTO_NATIONAL = $(DIVISION) $(REGION) $(AIANNH) $(ANRC) $(COUNTY) $(CD) $(STATE)
+# lists of data (two kinds of files)
 
+# 1. Cartographic boundary files
+# National data sets
+CARTO_NATIONAL = $(carto_national) $(DIVISION) $(REGION)
 # Data sets that need to be joined w/ 'GEOID10' instead of GEOID.
 CARTO_2010 = $(UAC) $(ZCTA5)
-
-# Per-state data sets
-CARTO_BY_STATE = $(COUSUB) $(PLACE) $(SLDL) $(SLDU) $(TRACT)
-
 # Per-state data sets that need to be joined w/ 'GEOID10' instead of GEOID.
 CARTO_2010_STATE = $(PUMA)
-
-CARTO_NODATA = $(NATION) $(SUBBARRIO) $(COUNTY_WITHIN_UA)
+CARTO_NODATA = $(carto_nodata) $(NATION) $(COUNTY_WITHIN_UA)
 
 CARTO = $(CARTO_NATIONAL) $(CARTO_2010) $(CARTO_BY_STATE) $(CARTO_2010_STATE)
 
+# 2. TIGER data files
 # National data sets
-TIGER_NATIONAL = $(AITSN) $(CNECTA) $(CBSA) \
+TIGER_NATIONAL = $(tiger_national) $(AITSN) $(CNECTA) $(CBSA) \
 	$(CSA) $(METDIV) $(NECTA) $(NECTADIV) $(TBG)
-
 # Per-state data sets.
-TIGER_BY_STATE = $(BG) $(CONCITY) $(ELSD) \
+TIGER_BY_STATE = $(tiger_by_state) $(BG) $(CONCITY) $(ELSD) \
 	$(SCSD) $(TTRACT) $(UNSD)
-
 # Geodata with no survey data available from the API
-TIGER_NODATA = $(ESTATE) $(MIL) $(PRIMARYROADS) \
+TIGER_NODATA = $(tiger_nodata) $(ESTATE) $(MIL) $(PRIMARYROADS) \
 	$(PRISECROADS) $(RAILS) $(ROADSCOUNTY) $(TABBLOCK) \
 	$(AREAWATERCOUNTY) $(LINEARWATERCOUNTY)
 
 TIGER = $(TIGER_NATIONAL) $(TIGER_BY_STATE)
 
+# data fields #
 
 DATA_FIELDS ?= GEOID B06011_001E B25105_001E B25035_001E B01003_001E \
 	B25001_001E B25002_002E B25002_003E B25003_001E B25003_002E B25003_003E \
@@ -397,13 +415,13 @@ $(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).json: | $$(@D)
 $(YEAR)/CONCITY/tl_$(YEAR)_%_concity_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=consolidated+city:*' --data in=state:$*
 
-$(YEAR)/COUSUB/cb_$(YEAR)_%_cousub_500k_$(SERIES).json: | $$(@D)
+$(YEAR)/$(call base,COUSUB,%,cousub)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=county+subdivision:*' --data in=state:$*
 
 $(YEAR)/ELSD/tl_$(YEAR)_%_elsd_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=school+district+(elementary):*' --data in=state:$*
 
-$(YEAR)/PLACE/cb_$(YEAR)_%_place_500k_$(SERIES).json: | $$(@D)
+$(YEAR)/$(call base,PLACE,%,place)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=place:*' --data in=state:$*
 
 $(YEAR)/PUMA/cb_$(YEAR)_%_puma10_500k_$(SERIES).json: | $$(@D)
@@ -412,13 +430,13 @@ $(YEAR)/PUMA/cb_$(YEAR)_%_puma10_500k_$(SERIES).json: | $$(@D)
 $(YEAR)/SCSD/tl_$(YEAR)_%_scsd_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=school+district+(secondary):*' --data in=state:$*
 
-$(YEAR)/SLDL/cb_$(YEAR)_%_sldl_500k_$(SERIES).json: | $$(@D)
+$(YEAR)/$(call base,SLDL,%,sldl)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=state+legislative+district+(lower+chamber):*' --data in=state:$*
 
-$(YEAR)/SLDU/cb_$(YEAR)_%_sldu_500k_$(SERIES).json: | $$(@D)
+$(YEAR)/$(call base,SLDU,%,sldu)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=state+legislative+district+(upper+chamber):*' --data in=state:$*
 
-$(YEAR)/TRACT/cb_$(YEAR)_%_tract_500k_$(SERIES).json: | $$(@D)
+$(YEAR)/$(call base,TRACT,%,tract)_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=tract:*' --data in=state:$*
 
 $(YEAR)/UNSD/tl_$(YEAR)_%_unsd_$(SERIES).json: | $$(@D)
