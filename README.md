@@ -101,14 +101,14 @@ Sometimes you want to make summaries based on the raw data fields. For instance,
 
 This example adds a field called `TransitCommutePct`, which is produced by dividing `B08101_025E` (estimated number of workers who commuted by transit) by the `B08101_001E` (estimated number of workers)
 ```
-OUTPUT_FIELDS= B08101_025 / B08101_001 AS TransitCommutePct,
+OUTPUT_FIELDS = B08101_025 / B08101_001 AS TransitCommutePct,
 ```
 
 Note that in the expression, the `E` is dropped from the variable names. This is due to a limitation of the Shape format - only the first 10 letters of field names are used. Also, the expression must end in a comma.
 
 Another example:
 ```
-OUTPUT_FIELDS= B01003_001/(ALAND/1000000.) AS PopDensityKm,
+OUTPUT_FIELDS = B01003_001/(ALAND/1000000.) AS PopDensityKm,
 ```
 
 The field `B01003_001` is population. The census calls it `B01003_001E`, but has been shortened to 10 characters. We divide it by `ALAND/1000000.`, because the `ALAND` field is given in meters. The `AS PopDensityKm` gives the name of the new field. Finally, it must end with a comma (`,`).
@@ -200,7 +200,7 @@ Your data will be available in `census-data/2014/COUNTY`. These steps can be rea
 * The AWATER (water area) and ALAND (land area) fields are given in square meters. The Shapefile format has trouble with values more than nine digits long, so these will trigger warnings in `ogrogr`. The Makefile adds LANDKM and WATERKM fields (the same data in square kilometers) to get around this issue. Also, `get-tiger` squelches the warning messages on these operations.
 * Where available, get-tiger will download the [cartographic boundary](https://www.census.gov/geo/maps-data/data/tiger-cart-boundary.html) files, rather than [Tiger/Line](https://www.census.gov/geo/maps-data/data/tiger-line.html) files. The cartographic files are clipped to the shoreline, Tiger/Line files are not. If you would prefer the Tiger/Line files, open an issue and I'll add a way to download them.
 * Run tasks with the `--jobs` option (e.g. `make --jobs 3`) to take advantage of a fast connection and/or computer.
-* Downloading data for blockgroups requires downloading data county-by-county. This means get-tiger needs a list of all the counties in the US. A list of 2014 counties is included. If you're downloading blockgroups for other years, run `make countyfips YEAR=2525` before running `make BG`.
+* Downloading data for blockgroups, area water, linear water, or roads requires downloading data county-by-county. This means get-tiger needs a list of all the counties in the US. A list of 2013 & 2014 counties is included. If you're downloading blockgroups for other years, run `make counties/2020.ini YEAR=2020` before running `make BG YEAR=2020` or `make AREAWATER YEAR=2020`.
 
 ## License
 

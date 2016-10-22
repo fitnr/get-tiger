@@ -187,7 +187,7 @@ driver.shp  = 'ESRI Shapefile'
 driver.json = GeoJSON
 
 export CPL_MAX_ERROR_REPORTS=3
-OGRFLAGS = -f $(driver.$(format)) -dialect sqlite
+OGRFLAGS = -f $(driver.$(format))
 
 .PHONY: all $(DATASETS)
 
@@ -258,36 +258,22 @@ $(NODATA): $(YEAR)/%.$(format): $(YEAR)/%.zip
 	unzip -oqd $(@D) $<
 	@touch $@
 
-$(addprefix $(YEAR)/,$(addsuffix .$(format),$(CARTO_2010))): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
+SELECTION = -dialect sqlite -sql "SELECT *, \
+    $(1) \
+    ROUND(ALAND$(2)/1000000., 3) LANDKM, ROUND(AWATER$(2)/1000000., 3) WATERKM \
+    FROM $(*F) a LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID$(2) = b.GEOID)"
+
+SHPS_2010 = $(CARTO_2010) $(CARTO_2010_STATE)
+
+$(foreach x,$(SHPS_2010),$(YEAR)/$x.$(format)): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 	@rm -f $@
-	ogr2ogr $@ /vsizip/$</$(@F) $(OGRFLAGS) \
-	-sql "SELECT *, \
-	    $(OUTPUT_FIELDS_10) \
-	    ROUND(ALAND10/1000000., 6) LANDKM, ROUND(AWATER10/1000000., 6) WATERKM \
-	    FROM $(basename $(@F)) a \
-	    LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID10=b.GEOID)"
+	ogr2ogr $@ /vsizip/$< $(OGRFLAGS) $(call SELECTION,$(OUTPUT_FIELDS_10),10)
 
-SHPS_2010 = $(addprefix $(YEAR)/,$(addsuffix .$(format),$(CARTO_2010_STATE)))
+SHPS = $(CARTO_NATIONAL) $(CARTO_BY_STATE) $(TIGER_NATIONAL) $(TIGER_BY_STATE))
 
-$(SHPS_2010): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
+$(foreach x,$(SHPS),$(YEAR)/$x.$(format)): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 	@rm -f $@
-	ogr2ogr $@ /vsizip/$</$(@F) $(OGRFLAGS) \
-	    -sql "SELECT *, \
-	    $(OUTPUT_FIELDS) \
-	    ROUND(ALAND/1000000., 6) LANDKM, ROUND(AWATER/1000000., 6) WATERKM \
-	    FROM $(basename $(@F)) a \
-	    LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID10=b.GEOID)"
-
-SHPS = $(addprefix $(YEAR)/,$(addsuffix .$(format),$(CARTO_NATIONAL) $(CARTO_BY_STATE) $(TIGER_NATIONAL) $(TIGER_BY_STATE)))
-
-$(SHPS): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
-	@rm -f $@
-	ogr2ogr $@ /vsizip/$</$(@F) $(OGRFLAGS) \
-	    -sql "SELECT *, \
-	    $(OUTPUT_FIELDS) \
-	    ROUND(ALAND/1000000., 2) as LANDKM, ROUND(AWATER/1000000., 2) as WATERKM \
-	    FROM $(basename $(@F)) \
-	    LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) USING (GEOID)"
+	ogr2ogr $@ /vsizip/$< $(OGRFLAGS) $(call SELECTION,$(OUTPUT_FIELDS))
 
 %.dbf: %.csv %.csvt
 	ogr2ogr -f 'ESRI Shapefile' $@ $< -overwrite -select $(CENSUS_DATA_FIELDS)
@@ -301,7 +287,7 @@ $(SHPS): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 
 # County by State files
 combinecountyfiles = for base in $(basename $(^F)); do \
-	ogr2ogr $@ /vsizip/$(<D)/$$base.zip/$$base.shp $(OGRFLAGS) -update -append; \
+	ogr2ogr $@ /vsizip/$(<D)/$$base.zip $$base $(OGRFLAGS) -update -append; \
 	done;
 
 areawaters = $(foreach x,$(AREAWATER),$(YEAR)/$x.$(format))
@@ -349,68 +335,6 @@ TOCSV = 's/,null,/,,/g; \
 $(foreach s,$(STATE_FIPS),$(foreach c,$(COUNTIES_$(s)),$(YEAR)/BG/tl_$(YEAR)_$(s)_$(c)_$(SERIES).json)): $(YEAR)/BG/tl_$(YEAR)_%_$(SERIES).json: | $$(@D)
 	$(CURL) --data for='block+group:*' --data in=state:$(firstword $(subst _, ,$*))+county:$(lastword $(subst _, ,$*))
 
-# Carto boundary files
-
-$(YEAR)/$(NATION)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=us:*'
-
-$(YEAR)/$(REGION)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=region:*'
-
-$(YEAR)/$(DIVISION)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=division:*'
-
-# National data files
-
-$(YEAR)/$(AIANNH)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=american+indian+area/alaska+native+area/hawaiian+home+land:*'
-
-$(YEAR)/AITSN/tl_$(YEAR)_us_aitsn_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=tribal+subdivision/remainder:*'
-
-# Not actually national, there's just one state with Alaska Native Regional Corps (Guess which one!)
-$(YEAR)/$(ANRC)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=alaska+native+regional+corporation:*'
-
-$(YEAR)/$(CD)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=congressional+district:*'
-
-$(YEAR)/$(CBSA)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=metropolitan+statistical+area/micropolitan+statistical+area:*'
-
-$(YEAR)/$(CNECTA)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=combined+new+england+city+and+town+area:*'
-
-$(YEAR)/$(COUNTY)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=county:*'
-
-$(YEAR)/$(CSA)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=combined+statistical+area:*'
-
-$(YEAR)/$(METDIV)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=metropolitan+division:*'
-
-$(YEAR)/$(NECTA)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=new+england+city+and+town+area:*'
-
-$(YEAR)/$(NECTADIV)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=necta+division:*'
-
-$(YEAR)/$(STATE)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=state:*'
-
-$(YEAR)/$(TBG)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=tribal+block+group:*'
-
-$(YEAR)/$(TTRACT)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=tribal+census+tract:*'
-
-$(YEAR)/$(UAC)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=urban+area:*'
-
-$(YEAR)/$(ZCTA5)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=zip+code+tabulation+area:*'
-
 # State by state files
 
 $(YEAR)/CONCITY/tl_$(YEAR)_%_concity_$(SERIES).json: | $$(@D)
@@ -442,6 +366,31 @@ $(YEAR)/$(call base,TRACT,%,tract)_$(SERIES).json: | $$(@D)
 
 $(YEAR)/UNSD/tl_$(YEAR)_%_unsd_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=school+district+(unified):*' --data in=state:$*
+
+# Carto boundary files and National data files
+
+data_NATION = us
+data_REGION = region
+data_DIVISION = division
+data_AIANNH = american+indian+area/alaska+native+area/hawaiian+home+land
+data_AITSN = tribal+subdivision/remainder
+data_ANRC = alaska+native+regional+corporation
+data_CD = congressional+district
+data_CBSA = metropolitan+statistical+area/micropolitan+statistical+area
+data_CNECTA = combined+new+england+city+and+town+area
+data_COUNTY = county
+data_CSA = combined+statistical+area
+data_METDIV = metropolitan+division
+data_NECTA = new+england+city+and+town+area
+data_NECTADIV = necta+division
+data_STATE = state
+data_TBG = tribal+block+group
+data_TTRACT = tribal+census+tract
+data_UAC = urban+area
+data_ZCTA5 = zip+code+tabulation+area
+
+$(YEAR)/%_$(SERIES).json: | $$(@D)
+	$(CURL) --data 'for=$(data_$(*D)):*'
 
 # INI files with lists of county FIPS
 counties/$(YEAR).ini: $(YEAR)/$(COUNTY).zip | counties
