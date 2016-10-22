@@ -88,13 +88,12 @@ To download different data, see the [Census API documentation](http://www.census
 Make your selection, then run it, e.g.:
 
 ````bash
-make STATE DATA_FIELDS="GEOID B24124_406E B24124_407E"
+make STATE DATA_FIELDS="B24124_406E B24124_407E"
 ````
-Note that `GEOID` must be the first field. This example will download state-level geodata and employment figures for commercial divers and locksmiths.
 
 You could also add these fields to `key.ini`:
 ````make
-DATA_FIELDS= GEOID B24124_406E B24124_407E
+DATA_FIELDS = B24124_406E B24124_407E
 ````
 This will override the defaults in the [`Makefile`](Makefile).
 
@@ -184,7 +183,7 @@ make 2014/COUSUB.json format=json
 # Census API key
 export KEY=12345 
 # chosen data fields
-export DATA_FIELDS="GEOID B24124_406E B24124_407E"
+export DATA_FIELDS="B24124_406E B24124_407E"
 
 # If you do this, you should probably fork the repository and clone your fork
 census-data:

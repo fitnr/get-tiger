@@ -155,7 +155,7 @@ TIGER = $(TIGER_NATIONAL) $(TIGER_BY_STATE)
 
 # data fields #
 
-DATA_FIELDS ?= GEOID B06011_001E B25105_001E B25035_001E B01003_001E \
+DATA_FIELDS ?= B06011_001E B25105_001E B25035_001E B01003_001E \
 	B25001_001E B25002_002E B25002_003E B25003_001E B25003_002E B25003_003E \
 	B08101_001E B08101_009E B08101_017E B08101_025E B08101_033E B08101_041E \
 	B08101_049E B25024_001E B25024_002E B25024_003E B25024_004E B25024_005E \
@@ -172,7 +172,7 @@ OUTPUT_FIELDS_10 ?= ROUND(B01003_001 / (ALAND10 / 1000000.), 2) AS PopDensKm, \
 	ROUND(B08101_001 / B01003_001, 2) AS WrkForcPct, \
 	ROUND(B25033_008 / B25033_001, 2) AS RentPct,
 
-CENSUS_DATA_FIELDS = $(subst $( ) $( ),$(comma),$(DATA_FIELDS))
+CENSUS_DATA_FIELDS = GEOID,$(subst $( ) $( ),$(comma),$(DATA_FIELDS))
 
 CURL = curl $(CURLFLAGS)
 CURLFLAGS = --get $(API_BASE)/$(YEAR)/$(SERIES) \
@@ -287,12 +287,15 @@ $(SHPS): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 	    FROM $(basename $(@F)) \
 	    LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) USING (GEOID)"
 
-%.dbf: %.csv
-	ogr2ogr -f 'ESRI Shapefile' $@ $< -overwrite -dialect sqlite \
-	    -sql "SELECT GEOID $(foreach f,$(wordlist 2,100,$(DATA_FIELDS)),, CAST($f AS INTEGER) $f) \
-	    FROM $(basename $(@F))"
+%.dbf: %.csv %.csvt
+	ogr2ogr -f 'ESRI Shapefile' $@ $< -overwrite -select $(CENSUS_DATA_FIELDS)
 	@rm -f $(basename $@).{ind,idm}
 	ogrinfo $@ -sql "CREATE INDEX ON $(basename $(@F)) USING GEOID"
+
+# Totally fake type hinting. A String for GEOID, every other column is an Integer
+%.csvt: %.csv
+	head -n1 $< | \
+	sed 's/^GEOID/"String"/; s/,[A-Za-z0-9_]*/,"Integer"/g' > $@
 
 # County by State files
 counties = $$(shell cat counties/$(YEAR)/$$*)
