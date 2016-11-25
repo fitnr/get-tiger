@@ -123,11 +123,10 @@ make STATE YEAR=2015
 
 ### Data series
 
-The default data series is ACS 5-year data or `acs5`. To fetch another data set, use the `SERIES` variable.
+The most recent 5-year data available on the API is from 2014. Data from 2015 is available, but only from the 1-year dataset. To fetch another data set, use the `SERIES` variable. The default is `acs5`, use `acs1` for 1-year data.
 ```bash
-make TRACT SERIES=acs1 
+make TRACT SERIES=acs1 YEAR=2015
 ```
-(This isn't tested for all data series, but should work.)
 
 ### Secret bonus tasks for merging data
 
