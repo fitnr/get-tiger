@@ -275,7 +275,7 @@ $(foreach x,$(SHPS),$(YEAR)/$x.$(format)): $(YEAR)/%.$(format): $(YEAR)/%.zip $(
 	ogr2ogr $@ /vsizip/$< $(OGRFLAGS) $(call SELECTION,$(OUTPUT_FIELDS))
 
 %.dbf: %.csv %.csvt
-	ogr2ogr -f 'ESRI Shapefile' $@ $< -overwrite -select $(CENSUS_DATA_FIELDS)
+	ogr2ogr -f 'ESRI Shapefile' $@ $< -overwrite -select $(subst _,,$(CENSUS_DATA_FIELDS))
 	@rm -f $(basename $@).{ind,idm}
 	ogrinfo $@ -sql "CREATE INDEX ON $(basename $(@F)) USING GEOID"
 
@@ -321,6 +321,7 @@ TOCSV = 's/,null,/,,/g; \
 	s/\[//g; \
 	s/\]//g; \
 	s/,$$//g; \
+	s/_//g; \
 	s/^[0-9]*US//'
 
 %.csv: %.json
