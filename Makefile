@@ -87,6 +87,8 @@ CNECTA = CNECTA/tl_$(YEAR)_us_cnecta
 CONCITY = $(foreach f,09 13 18 20 21 30 47,CONCITY/tl_2014_$f_concity)
 
 COUNTY = $(call base,COUNTY,us,county)
+COUNTY5m = cb_$(YEAR)_us_county_5m
+
 COUSUB = $(foreach f,$(STATE_FIPS),$(call base,COUSUB,$f,cousub))
 COUNTY_WITHIN_UA = $(foreach f,$(STATE_FIPS),COUNTY_WITHIN_UA/cb_$(YEAR)_$f_county_within_ua_500k)
 CSA = CSA/tl_$(YEAR)_us_csa
@@ -136,7 +138,7 @@ CARTO_NATIONAL = $(carto_national) $(DIVISION) $(REGION)
 CARTO_2010 = $(UAC) $(ZCTA5)
 # Per-state data sets that need to be joined w/ 'GEOID10' instead of GEOID.
 CARTO_2010_STATE = $(PUMA)
-CARTO_NODATA = $(carto_nodata) $(NATION) $(COUNTY_WITHIN_UA)
+CARTO_NODATA = $(carto_nodata) $(NATION) $(COUNTY_WITHIN_UA) $(COUNTY5m)
 
 CARTO = $(CARTO_NATIONAL) $(CARTO_2010) $(CARTO_BY_STATE) $(CARTO_2010_STATE)
 
@@ -393,7 +395,7 @@ $(YEAR)/%_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=$(data_$(*D)):*'
 
 # INI files with lists of county FIPS
-counties/$(YEAR).ini: $(YEAR)/$(COUNTY).zip | counties
+counties/$(YEAR).ini: $(YEAR)/$(COUNTY5m).zip | counties
 	ogr2ogr /dev/stdout /vsizip/$< -dialect sqlite -f CSV \
 	    -sql "SELECT 'COUNTIES_' || STATEFP, group_concat(COUNTYFP, ' ') \
 	    FROM $(basename $(<F)) GROUP BY STATEFP" | \
