@@ -1,0 +1,43 @@
+Available data sets:
+'(run with "make DATASET")'
+NATION - United States
+DIVISION - four very broad sections of the country
+REGION - nine broad sections of the country
+AIANNH - American Indian areas, Alaska Native areas, Hawaiian home lands
+AITSN - American Indian tribal subvidisions
+ANRC - Alaska Native regional corporations
+BG - Block groups
+CNECTA - Combined New England city and town areas
+CBSA - Core-based statistical qreas
+CD - Congressional districts 
+CONCITY - Consolidated cities 
+COUNTY - Counties
+COUNTY_WITHIN_UA - Urban areas segmented by county
+COUSUB - County subvidisions
+CSA - Consolidated statistical areas
+ELSD - Elementary school districts
+ESTATE - Estates [US Virgin Islands]
+METDIV - Metropolitan Divisions
+MIL - Military areas
+NECTA - New England city and town areas
+NECTADIV - New England city and town area divisions
+PLACE - Places
+PRIMARYROADS - Primary roads [national]
+PRISECROADS - Primary and secondary roads [by state]
+PUMA - Public use microdata areas
+RAILS - Railroads
+ROADS - Roads. Downloads one file for each county, then combines into state files.
+SCSD - Secondary school districts 
+SLDL - State legislative districts [lower chamber]
+SLDU - State legislative districts [upper chamber]
+STATE - States and territories
+SUBBARRIO - Sub-barrios [Puerto Rico]
+TABBLOCK - Blocks
+TBG - Tribal block groups
+TRACT - Census tracts
+TTRACT - Tribal Census tracts
+UAC - Urbanized areas
+UNSD - Unified school districts
+ZCTA5 - Zip code tabulation areas
+AREAWATER - Water polygons. Downloads one file for each county, then combines into state files.
+LINEARWATER - Water lines. Downloads one file for each county, then combines into state files.

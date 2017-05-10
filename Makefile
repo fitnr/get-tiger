@@ -192,50 +192,8 @@ OGRFLAGS = -f $(driver.$(format))
 
 .PHONY: all $(DATASETS)
 
-all:
-	@echo Available data sets:
-	@echo '(run with "make DATASET")'
-	@echo NATION - United States
-	@echo DIVISION - four very broad sections of the country
-	@echo REGION - nine broad sections of the country
-	@echo AIANNH - American Indian areas, Alaska Native areas, Hawaiian home lands
-	@echo AITSN - American Indian tribal subvidisions
-	@echo ANRC - Alaska Native regional corporations
-	@echo BG - Block groups
-	@echo CNECTA - Combined New England city and town areas
-	@echo CBSA - Core-based statistical qreas
-	@echo CD - Congressional districts 
-	@echo CONCITY - Consolidated cities 
-	@echo COUNTY - Counties
-	@echo COUNTY_WITHIN_UA - Urban areas segmented by county
-	@echo COUSUB - County subvidisions
-	@echo CSA - Consolidated statistical areas
-	@echo ELSD - Elementary school districts
-	@echo ESTATE - Estates [US Virgin Islands]
-	@echo METDIV - Metropolitan Divisions
-	@echo MIL - Military areas
-	@echo NECTA - New England city and town areas
-	@echo NECTADIV - New England city and town area divisions
-	@echo PLACE - Places
-	@echo PRIMARYROADS - Primary roads [national]
-	@echo PRISECROADS - Primary and secondary roads [by state]
-	@echo PUMA - Public use microdata areas
-	@echo RAILS - Railroads
-	@echo ROADS - Roads. Downloads one file for each county, then combines into state files.
-	@echo SCSD - Secondary school districts 
-	@echo SLDL - State legislative districts [lower chamber]
-	@echo SLDU - State legislative districts [upper chamber]
-	@echo STATE - States and territories
-	@echo SUBBARRIO - Sub-barrios [Puerto Rico]
-	@echo TABBLOCK - Blocks
-	@echo TBG - Tribal block groups
-	@echo TRACT - Census tracts
-	@echo TTRACT - Tribal Census tracts
-	@echo UAC - Urbanized areas
-	@echo UNSD - Unified school districts
-	@echo ZCTA5 - Zip code tabulation areas
-	@echo AREAWATER - Water polygons. Downloads one file for each county, then combines into state files.
-	@echo LINEARWATER - Water lines. Downloads one file for each county, then combines into state files.
+# Print shortcut commands
+all: commands.txt; @cat $<
 
 .SECONDEXPANSION:
 
