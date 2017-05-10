@@ -277,11 +277,9 @@ $(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: $$(foreach x,$$(COUNTIES_$$*),$$(@D)/t
 # Census API json has a strange CSV-like format, includes "YY000US" prefix on GEOID.
 # Luckily, this makes it fairly easy to brute force into CSV
 TOCSV = 's/,null,/,,/g; \
-	s/"//g; \
-	s/\[//g; \
+	s/[["_]//g; \
 	s/\]//g; \
 	s/,$$//g; \
-	s/_//g; \
 	s/^[0-9]*US//'
 
 %.csv: %.json
