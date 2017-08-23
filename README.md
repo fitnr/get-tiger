@@ -118,8 +118,10 @@ The field `B01003_001` is population. The census calls it `B01003_001E`, but has
 By default, the Makefile downloads 2015 data, the most recent year for which [ACS](https://www.census.gov/programs-surveys/acs/) is available. For older years (or newer years, if it's the future), use the `YEAR` variable:
 ```bash
 make STATE YEAR=2013
-make STATE YEAR=2015 
+make STATE YEAR=2015
 ```
+
+The `counties` folder contains helper files to track county FIPS codes. The makefile `ini.mk` can create these files.
 
 ### Data series
 
