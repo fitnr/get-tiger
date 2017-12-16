@@ -115,7 +115,7 @@ The field `B01003_001` is population. The census calls it `B01003_001E`, but has
 
 ### Vintage
 
-By default, the Makefile downloads 2015 data, the most recent year for which [ACS](https://www.census.gov/programs-surveys/acs/) is available. For older years (or newer years, if it's the future), use the `YEAR` variable:
+By default, the Makefile downloads 2016 data, the most recent year for which [ACS](https://www.census.gov/programs-surveys/acs/) is available. For older years (or newer years, if it's the future), use the `YEAR` variable:
 ```bash
 make STATE YEAR=2013
 make STATE YEAR=2015
