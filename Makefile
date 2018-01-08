@@ -203,10 +203,7 @@ $(DATASETS): $$(addprefix $(YEAR)/,$$(addsuffix .$(format),$$($$@)))
 merge = BG CONCITY COUNTY_WITHIN_UA COUSUB ELSD PLACE PRISECROADS PUMA SCSD SLDL SLDU TABBLOCK TRACT UNSD
 
 $(foreach x,$(merge),$(YEAR)/$x.$(format)): $(YEAR)/%.$(format): $$(foreach x,$$($$*),$(YEAR)/$$x.$(format))
-	@rm -rf $@
-	for f in $(basename $(^F)); do \
-	    ogr2ogr $@ $(<D)/$$f.$(format) -update -append; \
-	done;
+	ogrmerge.py $(OGRFLAGS) -overwrite_ds -single -o $@ $^
 
 # Merge shp and acs data, e.g:
 # 2014/AIANNH/tl_2014_us_aiannh.shp: 2014/AIANNH/tl_2014_us_aiannh.zip 2014/AIANNH/tl_2014_us_aiannh_acs5.csv
@@ -245,27 +242,21 @@ $(foreach x,$(SHPS),$(YEAR)/$x.$(format)): $(YEAR)/%.$(format): $(YEAR)/%.zip $(
 	sed 's/^GEOID/"String"/; s/,[A-Za-z0-9_]*/,"Integer"/g' > $@
 
 # County by State files
-combinecountyfiles = for base in $(basename $(^F)); do \
-	ogr2ogr $@ /vsizip/$(<D)/$$base.zip $$base $(OGRFLAGS) -update -append; \
-	done;
 
 areawaters = $(foreach x,$(AREAWATER),$(YEAR)/$x.$(format))
 awfp := $(YEAR)/AREAWATER/tl_$(YEAR)_$$*$$x_areawater.zip
 $(areawaters): $(YEAR)/AREAWATER/tl_$(YEAR)_%_areawater.$(format): $$(foreach x,$$(COUNTIES_$$*),$(awfp))
-	@rm -f $@
-	$(combinecountyfiles)
+	ogrmerge.py $(OGRFLAGS) -overwrite_ds -single -o $@ $(foreach x,$(^F),/vsizip/$(<D)/$x/$(x:.zip=.shp))
 
 linearwaters = $(foreach x,$(LINEARWATER),$(YEAR)/$x.$(format))
 lwfp := $(YEAR)/LINEARWATER/tl_$(YEAR)_$$*$$x_linearwater.zip
 $(linearwaters): $(YEAR)/LINEARWATER/tl_$(YEAR)_%_linearwater.$(format): $$(foreach x,$$(COUNTIES_$$*),$(lwfp))
-	@rm -f $@
-	$(combinecountyfiles)
+	ogrmerge.py $(OGRFLAGS) -overwrite_ds -single -o $@ $(foreach x,$(^F),/vsizip/$(<D)/$x/$(x:.zip=.shp))
 
 roads = $(foreach x,$(ROADS),$(YEAR)/$x.$(format))
 rdfp := $(YEAR)/ROADS/tl_$(YEAR)_$$*$$x_roads.zip
 $(roads): $(YEAR)/ROADS/tl_$(YEAR)_%_roads.$(format): $$(foreach x,$$(COUNTIES_$$*),$(rdfp))
-	@rm -f $@
-	$(combinecountyfiles)
+	ogrmerge.py $(OGRFLAGS) -overwrite_ds -single -o $@ $(foreach x,$(^F),/vsizip/$(<D)/$x/$(x:.zip=.shp))
 
 $(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: $$(foreach x,$$(COUNTIES_$$*),$$(@D)/tl_$(YEAR)_$$*_$$x_$(SERIES).csv) | $$(@D)
 	@rm -f $@
