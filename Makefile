@@ -175,10 +175,10 @@ OUTPUT_FIELDS_10 ?= ROUND(B01003001E / (ALAND10 / 1000000.), 2) AS PopDensKm, \
 	ROUND(B08101001E / B01003001E, 2) AS WrkForcPct, \
 	ROUND(B25033008E / B25033001E, 2) AS RentPct,
 
-CENSUS_DATA_FIELDS = GEOID,$(subst $( ) $( ),$(comma),$(DATA_FIELDS))
+CENSUS_DATA_FIELDS = GEO_ID,$(subst $( ) $( ),$(comma),$(DATA_FIELDS))
 
 CURL = curl $(CURLFLAGS)
-CURLFLAGS = --get $(API_BASE)/$(YEAR)/$(SERIES) \
+CURLFLAGS = --get $(API_BASE)/$(YEAR)/acs/$(SERIES) \
 	-o $@ \
 	--data key=$(KEY) \
 	--data get=$(CENSUS_DATA_FIELDS)
@@ -280,6 +280,7 @@ TOCSV = 's/,null,/,,/g; \
 	s/[["_]//g; \
 	s/\]//g; \
 	s/,$$//g; \
+	s/-666666666//; \
 	s/^[0-9]*US//'
 
 %.csv: %.json
