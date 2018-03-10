@@ -354,10 +354,10 @@ counties/$(YEAR).ini: | $(YEAR)/$(COUNTY20m).zip counties
 # Download ZIP files
 
 $(addsuffix .zip,$(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA))): $(YEAR)/%: | $$(@D)
-	curl -o $@ $(SHP_BASE)/$*
+	ftp -V -o $@ $(SHP_BASE)/$*
 
 $(addsuffix .zip,$(addprefix $(YEAR)/,$(CARTO) $(CARTO_NODATA))): $(YEAR)/%: | $$(@D)
-	curl -o $@ $(CARTO_BASE)/$(*F)
+	ftp -V -o $@ $(CARTO_BASE)/$(*F)
 
 $(sort $(dir $(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA) $(CARTO) $(CARTO_NODATA)))): $(YEAR)
 	-mkdir $@
