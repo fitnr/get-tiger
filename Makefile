@@ -16,6 +16,8 @@ include counties/$(YEAR).ini
 
 export KEY YEAR
 
+.SUFFIXES:
+
 comma = ,
 STATE_FIPS = 01 02 04 05 06 08 09 10 11 12 13 15 16 17 18 19 20 \
 			 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 \
@@ -179,7 +181,7 @@ CENSUS_DATA_FIELDS = GEO_ID,$(subst $( ) $( ),$(comma),$(DATA_FIELDS))
 
 CURL = curl $(CURLFLAGS)
 CURLFLAGS = --get $(API_BASE)/$(YEAR)/acs/$(SERIES) \
-	-o $@ \
+	-so $@ \
 	--data key=$(KEY) \
 	--data get=$(CENSUS_DATA_FIELDS)
 
@@ -236,7 +238,7 @@ $(foreach x,$(SHPS),$(YEAR)/$x.$(format)): $(YEAR)/%.$(format): $(YEAR)/%.zip $(
 %.dbf: %.csv %.csvt
 	ogr2ogr -f 'ESRI Shapefile' $@ $< -overwrite -select $(subst _,,$(CENSUS_DATA_FIELDS))
 	@rm -f $(basename $@).{ind,idm}
-	ogrinfo $@ -sql "CREATE INDEX ON $(basename $(@F)) USING GEOID"
+	ogrinfo -q $@ -sql "CREATE INDEX ON $(basename $(@F)) USING GEOID"
 
 # Totally fake type hinting. A String for GEOID, every other column is an Integer
 %.csvt: %.csv
@@ -362,4 +364,4 @@ $(addsuffix .zip,$(addprefix $(YEAR)/,$(CARTO) $(CARTO_NODATA))): $(YEAR)/%: | $
 $(sort $(dir $(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA) $(CARTO) $(CARTO_NODATA)))): $(YEAR)
 	-mkdir $@
 
-$(YEAR) counties: ; -mkdir -p $@
+$(YEAR) counties: ; -mkdir $@
