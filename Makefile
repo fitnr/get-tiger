@@ -236,7 +236,7 @@ $(foreach x,$(SHPS),$(YEAR)/$x.$(format)): $(YEAR)/%.$(format): $(YEAR)/%.zip $(
 	ogr2ogr $@ /vsizip/$< $(OGRFLAGS) $(call SELECTION,$(OUTPUT_FIELDS))
 
 %.dbf: %.csv %.csvt
-	ogr2ogr -f 'ESRI Shapefile' $@ $< -overwrite -select $(subst _,,$(CENSUS_DATA_FIELDS))
+	ogr2ogr -f 'ESRI Shapefile' $@ $< -overwrite
 	@rm -f $(basename $@).{ind,idm}
 	ogrinfo -q $@ -sql "CREATE INDEX ON $(basename $(@F)) USING GEOID"
 
@@ -262,11 +262,12 @@ rdfp := $(YEAR)/ROADS/tl_$(YEAR)_$$*$$x_roads.zip
 $(roads): $(YEAR)/ROADS/tl_$(YEAR)_%_roads.$(format): $$(foreach x,$$(COUNTIES_$$*),$(rdfp))
 	ogrmerge.py $(OGRFLAGS) -overwrite_ds -single -o $@ $(foreach x,$(^F),/vsizip/$(<D)/$x/$(x:.zip=.shp))
 
-$(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: $$(foreach x,$$(COUNTIES_$$*),$$(@D)/tl_$(YEAR)_$$*_$$x_$(SERIES).csv) | $$(@D)
-	@rm -f $@
+bgs = $(foreach x,$(BG),$(YEAR)/$(x)_$(SERIES).csv)
+$(bgs): $(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: $$(foreach x,$$(COUNTIES_$$*),$$(@D)/$$*/$$x_$(SERIES).csv) | $$(@D)
+	rm -f $@
 	head -n1 $< > $@
 	for COUNTY in $(COUNTIES_$*); do \
-	    tail -n+2 $(@D)/tl_$(YEAR)_$*_$${COUNTY}_bg_$(SERIES).csv; \
+	    tail -n+2 $(@D)/$*/$${COUNTY}_$(SERIES).csv; \
 	done >> $@
 
 # Census API json has a strange CSV-like format, includes "YY000US" prefix on GEOID.
@@ -274,7 +275,9 @@ $(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: $$(foreach x,$$(COUNTIES_$$*),$$(@D)/t
 TOCSV = 's/,null,/,,/g; \
 	s/[["_]//g; \
 	s/\]//g; \
+	s/null//g; \
 	s/,$$//g; \
+	s/block group/blockgroup/; \
 	s/-666666666//; \
 	s/^[0-9]*US//'
 
@@ -284,10 +287,11 @@ TOCSV = 's/,null,/,,/g; \
 # Download ACS data
 
 # County by state
-
-# e.g. 2014/BG/36_047_acs5.json
-$(foreach s,$(STATE_FIPS),$(foreach c,$(COUNTIES_$(s)),$(YEAR)/BG/tl_$(YEAR)_$(s)_$(c)_$(SERIES).json)): $(YEAR)/BG/tl_$(YEAR)_%_$(SERIES).json: | $$(@D)
-	$(CURL) --data for='block+group:*' --data in=state:$(firstword $(subst _, ,$*))+county:$(lastword $(subst _, ,$*))
+NOTINBG = B06011_001E,
+# e.g. 2014/BG/36/047_acs5.json
+$(foreach s,$(STATE_FIPS),$(foreach c,$(COUNTIES_$(s)),$(YEAR)/BG/$(s)/$(c)_$(SERIES).json)): $(YEAR)/BG/%_$(SERIES).json:
+	-@mkdir $(@D)
+	$(subst $(NOTINBG),,$(CURL)) --data for='block+group:*' --data in=state:$(firstword $(subst _, ,$*))+county:$(lastword $(subst /, ,$*))
 
 # State by state files
 
