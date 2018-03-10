@@ -193,7 +193,9 @@ OGRFLAGS = -f $(driver.$(format))
 .PHONY: all $(DATASETS)
 
 # Print shortcut commands
-all: commands.txt; @cat $<
+all: commands.txt
+	@cat $<
+	@echo default year is $(YEAR)
 
 .SECONDEXPANSION:
 

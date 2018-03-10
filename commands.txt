@@ -1,5 +1,5 @@
 Available data sets:
-'(run with "make DATASET")'
+(run with "make DATASET")
 NATION - United States
 DIVISION - four very broad sections of the country
 REGION - nine broad sections of the country
