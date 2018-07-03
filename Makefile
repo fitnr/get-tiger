@@ -342,13 +342,6 @@ data_ZCTA5 = zip+code+tabulation+area
 $(YEAR)/%_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=$(data_$(*D)):*'
 
-# INI files with lists of county FIPS
-counties/$(YEAR).ini: | $(YEAR)/$(COUNTY20m).zip counties
-	ogr2ogr /dev/stdout /vsizip/$< -dialect sqlite -f CSV \
-	    -sql "SELECT 'COUNTIES_' || STATEFP || ' = ' || group_concat(COUNTYFP, ' ') \
-	    FROM (SELECT * FROM $(basename $(<F)) ORDER BY COUNTYFP) a GROUP BY STATEFP" | \
-	tail -n+2 > $@
-
 # Download ZIP files
 
 $(addsuffix .zip,$(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA))): $(YEAR)/%: | $$(@D)
@@ -360,4 +353,4 @@ $(addsuffix .zip,$(addprefix $(YEAR)/,$(CARTO) $(CARTO_NODATA))): $(YEAR)/%: | $
 $(sort $(dir $(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA) $(CARTO) $(CARTO_NODATA)))): $(YEAR)
 	-mkdir $@
 
-$(YEAR) counties: ; -mkdir -p $@
+$(YEAR): ; -mkdir -p $@
