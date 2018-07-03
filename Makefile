@@ -245,27 +245,20 @@ $(foreach x,$(SHPS),$(YEAR)/$x.$(format)): $(YEAR)/%.$(format): $(YEAR)/%.zip $(
 	sed 's/^GEOID/"String"/; s/,[A-Za-z0-9_ ]*/,"Integer"/g' > $@
 
 # County by State files
-combinecountyfiles = for base in $(basename $(^F)); do \
-	ogr2ogr $@ /vsizip/$(<D)/$$base.zip $$base $(OGRFLAGS) -update -append; \
-	done;
+AREAWATER_base = tl_$(YEAR)_$1_areawater
+LINEARWATER_base = tl_$(YEAR)_$1_linearwater
+ROADS_base = tl_$(YEAR)_$1_roads
 
-areawaters = $(foreach x,$(AREAWATER),$(YEAR)/$x.$(format))
-awfp := $(YEAR)/AREAWATER/tl_$(YEAR)_$$*$$x_areawater.zip
-$(areawaters): $(YEAR)/AREAWATER/tl_$(YEAR)_%_areawater.$(format): $$(foreach x,$$(COUNTIES_$$*),$(awfp))
-	@rm -f $@
-	$(combinecountyfiles)
+define combinecountyfiles
+$(foreach x,$($1),$(YEAR)/$x.$(format)): \
+$(YEAR)/$1/$(call $(1)_base,%).$(format): $$$$(foreach x,$$$$(COUNTIES_$$$$*),$(YEAR)/$1/$(call $(1)_base,$$$$*$$$$x).zip)
+	@rm -f $$@
+	for c in $$(COUNTIES_$$*); do \
+	  ogr2ogr $$@ /vsizip/$$(<D)/$$(call $(1)_base,$$*$$$${c}).zip $$(call $(1)_base,$$*$$$${c}) $(OGRFLAGS) -update -append; \
+	done
+endef
 
-linearwaters = $(foreach x,$(LINEARWATER),$(YEAR)/$x.$(format))
-lwfp := $(YEAR)/LINEARWATER/tl_$(YEAR)_$$*$$x_linearwater.zip
-$(linearwaters): $(YEAR)/LINEARWATER/tl_$(YEAR)_%_linearwater.$(format): $$(foreach x,$$(COUNTIES_$$*),$(lwfp))
-	@rm -f $@
-	$(combinecountyfiles)
-
-roads = $(foreach x,$(ROADS),$(YEAR)/$x.$(format))
-rdfp := $(YEAR)/ROADS/tl_$(YEAR)_$$*$$x_roads.zip
-$(roads): $(YEAR)/ROADS/tl_$(YEAR)_%_roads.$(format): $$(foreach x,$$(COUNTIES_$$*),$(rdfp))
-	@rm -f $@
-	$(combinecountyfiles)
+$(foreach x,AREAWATER LINEARWATER ROADS,$(eval $(call combinecountyfiles,$x)))
 
 $(foreach x,$(STATE_FIPS),$(YEAR)/BG/tl_$(YEAR)_$x_bg_$(SERIES).csv): \
 $(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: $$(foreach x,$$(COUNTIES_$$*),$$(@D)/$$*/tl_$(YEAR)_$$*_$$x_$(SERIES).csv) | $$(@D)
