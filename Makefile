@@ -237,12 +237,12 @@ $(foreach x,$(SHPS),$(YEAR)/$x.$(format)): $(YEAR)/%.$(format): $(YEAR)/%.zip $(
 %.dbf: %.csv %.csvt
 	ogr2ogr -f 'ESRI Shapefile' $@ $< -overwrite -select $(subst _,,$(CENSUS_DATA_FIELDS))
 	@rm -f $(basename $@).{ind,idm}
-	ogrinfo $@ -sql "CREATE INDEX ON $(basename $(@F)) USING GEOID"
+	ogrinfo -q $@ -sql "CREATE INDEX ON $(basename $(@F)) USING GEOID"
 
 # Totally fake type hinting. A String for GEOID, every other column is an Integer
 %.csvt: %.csv
 	head -n1 $< | \
-	sed 's/^GEOID/"String"/; s/,[A-Za-z0-9_]*/,"Integer"/g' > $@
+	sed 's/^GEOID/"String"/; s/,[A-Za-z0-9_ ]*/,"Integer"/g' > $@
 
 # County by State files
 combinecountyfiles = for base in $(basename $(^F)); do \
@@ -267,7 +267,8 @@ $(roads): $(YEAR)/ROADS/tl_$(YEAR)_%_roads.$(format): $$(foreach x,$$(COUNTIES_$
 	@rm -f $@
 	$(combinecountyfiles)
 
-$(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: $$(foreach x,$$(COUNTIES_$$*),$$(@D)/tl_$(YEAR)_$$*_$$x_$(SERIES).csv) | $$(@D)
+$(foreach x,$(STATE_FIPS),$(YEAR)/BG/tl_$(YEAR)_$x_bg_$(SERIES).csv): \
+$(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: $$(foreach x,$$(COUNTIES_$$*),$$(@D)/$$*/tl_$(YEAR)_$$*_$$x_$(SERIES).csv) | $$(@D)
 	@rm -f $@
 	head -n1 $< > $@
 	for COUNTY in $(COUNTIES_$*); do \
@@ -287,12 +288,19 @@ TOCSV = 's/,null,/,,/g; \
 	sed $(TOCSV) $< > $@
 
 # Download ACS data
+.PRECIOUS: $(YEAR)/%_$(SERIES).json
 
 # County by state
 
-# e.g. 2014/BG/36_047_acs5.json
-$(foreach s,$(STATE_FIPS),$(foreach c,$(COUNTIES_$(s)),$(YEAR)/BG/tl_$(YEAR)_$(s)_$(c)_$(SERIES).json)): $(YEAR)/BG/tl_$(YEAR)_%_$(SERIES).json: | $$(@D)
-	$(CURL) --data for='block+group:*' --data in=state:$(firstword $(subst _, ,$*))+county:$(lastword $(subst _, ,$*))
+# e.g. 2014/BG/tl_2016_36_047_acs5.json
+define BG_task
+$$(foreach x,$$(COUNTIES_$(1)),$(YEAR)/BG/$(1)/tl_$(YEAR)_$(1)_$$(x)_$(SERIES).json): \
+$(YEAR)/BG/$(1)/tl_$(YEAR)_$(1)_%_$(SERIES).json: | $(YEAR)/BG/$(1)
+	$$(CURL) --create-dirs --data for='block+group:*' --data in=state:$(1)+county:$$*
+$(YEAR)/BG/$(1): ; mkdir $$@
+endef
+
+$(foreach x,$(STATE_FIPS),$(eval $(call BG_task,$(x))))
 
 # State by state files
 
@@ -348,7 +356,11 @@ data_TTRACT = tribal+census+tract
 data_UAC = urban+area
 data_ZCTA5 = zip+code+tabulation+area
 
-$(YEAR)/%_$(SERIES).json: | $$(@D)
+direct_data = NATION REGION DIVISION AIANNH AITSN ANRC \
+	CD CBSA CNECTA COUNTY CSA METDIV NECTA NECTADIV \
+	STATE TBG TTRACT UAC ZCTA5 
+
+$(foreach x,$(direct_data),$(YEAR)/$($x)_$(SERIES).json): $(YEAR)/%_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=$(data_$(*D)):*'
 
 # Download ZIP files
