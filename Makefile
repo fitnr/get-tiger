@@ -178,8 +178,9 @@ OUTPUT_FIELDS_10 ?= ROUND(B01003001E / (ALAND10 / 1000000.), 2) AS PopDensKm, \
 CENSUS_DATA_FIELDS = GEO_ID,$(subst $( ) $( ),$(comma),$(DATA_FIELDS))
 
 CURL = curl $(CURLFLAGS)
-CURLFLAGS = --get $(API_BASE)/$(YEAR)/acs/$(SERIES) \
-	-o $@ \
+CURLFLAGS = -o $@ \
+	--silent --show-error \
+	--get $(API_BASE)/$(YEAR)/acs/$(SERIES) \
 	--data key=$(KEY) \
 	--data get=$(CENSUS_DATA_FIELDS)
 
@@ -359,10 +360,10 @@ $(foreach x,$(direct_data),$(YEAR)/$($x)_$(SERIES).json): $(YEAR)/%_$(SERIES).js
 # Download ZIP files
 
 $(addsuffix .zip,$(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA))): $(YEAR)/%: | $$(@D)
-	curl -o $@ $(SHP_BASE)/$*
+	curl -o $@ --silent --show-error --connect-timeout 3 $(SHP_BASE)/$*
 
 $(addsuffix .zip,$(addprefix $(YEAR)/,$(CARTO) $(CARTO_NODATA))): $(YEAR)/%: | $$(@D)
-	curl -o $@ $(CARTO_BASE)/$(*F)
+	curl -o $@ --silent --show-error --connect-timeout 3 $(CARTO_BASE)/$(*F)
 
 $(sort $(dir $(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA) $(CARTO) $(CARTO_NODATA)))): $(YEAR)
 	-mkdir $@
