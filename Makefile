@@ -180,8 +180,9 @@ OUTPUT_FIELDS_10 ?= ROUND(B01003001E / (ALAND10 / 1000000.), 2) AS PopDensKm, \
 CENSUS_DATA_FIELDS = GEO_ID,$(subst $( ) $( ),$(comma),$(DATA_FIELDS))
 
 CURL = curl $(CURLFLAGS)
-CURLFLAGS = --get $(API_BASE)/$(YEAR)/acs/$(SERIES) \
-	-so $@ \
+CURLFLAGS = -o $@ \
+	--silent --show-error \
+	--get $(API_BASE)/$(YEAR)/acs/$(SERIES) \
 	--data key=$(KEY) \
 	--data get=$(CENSUS_DATA_FIELDS)
 
@@ -207,7 +208,10 @@ $(DATASETS): $$(addprefix $(YEAR)/,$$(addsuffix .$(format),$$($$@)))
 merge = BG CONCITY COUNTY_WITHIN_UA COUSUB ELSD PLACE PRISECROADS PUMA SCSD SLDL SLDU TABBLOCK TRACT UNSD
 
 $(foreach x,$(merge),$(YEAR)/$x.$(format)): $(YEAR)/%.$(format): $$(foreach x,$$($$*),$(YEAR)/$$x.$(format))
-	ogrmerge.py $(OGRFLAGS) -overwrite_ds -single -o $@ $^
+	@rm -rf $@
+	for f in $(basename $(^F)); do \
+	    ogr2ogr $@ $(<D)/$$f.$(format) -update -append; \
+	done;
 
 # Merge shp and acs data, e.g:
 # 2014/AIANNH/tl_2014_us_aiannh.shp: 2014/AIANNH/tl_2014_us_aiannh.zip 2014/AIANNH/tl_2014_us_aiannh_acs5.csv
@@ -243,28 +247,27 @@ $(foreach x,$(SHPS),$(YEAR)/$x.$(format)): $(YEAR)/%.$(format): $(YEAR)/%.zip $(
 # Totally fake type hinting. A String for GEOID, every other column is an Integer
 %.csvt: %.csv
 	head -n1 $< | \
-	sed 's/^GEOID/"String"/; s/,[A-Za-z0-9_]*/,"Integer"/g' > $@
+	sed 's/^GEOID/"String"/; s/,[A-Za-z0-9_ ]*/,"Integer"/g' > $@
 
 # County by State files
+AREAWATER_base = tl_$(YEAR)_$1_areawater
+LINEARWATER_base = tl_$(YEAR)_$1_linearwater
+ROADS_base = tl_$(YEAR)_$1_roads
 
-areawaters = $(foreach x,$(AREAWATER),$(YEAR)/$x.$(format))
-awfp := $(YEAR)/AREAWATER/tl_$(YEAR)_$$*$$x_areawater.zip
-$(areawaters): $(YEAR)/AREAWATER/tl_$(YEAR)_%_areawater.$(format): $$(foreach x,$$(COUNTIES_$$*),$(awfp))
-	ogrmerge.py $(OGRFLAGS) -overwrite_ds -single -o $@ $(foreach x,$(^F),/vsizip/$(<D)/$x/$(x:.zip=.shp))
+define combinecountyfiles
+$(foreach x,$($1),$(YEAR)/$x.$(format)): \
+$(YEAR)/$1/$(call $(1)_base,%).$(format): $$$$(foreach x,$$$$(COUNTIES_$$$$*),$(YEAR)/$1/$(call $(1)_base,$$$$*$$$$x).zip)
+	@rm -f $$@
+	for c in $$(COUNTIES_$$*); do \
+	  ogr2ogr $$@ /vsizip/$$(<D)/$$(call $(1)_base,$$*$$$${c}).zip $$(call $(1)_base,$$*$$$${c}) $(OGRFLAGS) -update -append; \
+	done
+endef
 
-linearwaters = $(foreach x,$(LINEARWATER),$(YEAR)/$x.$(format))
-lwfp := $(YEAR)/LINEARWATER/tl_$(YEAR)_$$*$$x_linearwater.zip
-$(linearwaters): $(YEAR)/LINEARWATER/tl_$(YEAR)_%_linearwater.$(format): $$(foreach x,$$(COUNTIES_$$*),$(lwfp))
-	ogrmerge.py $(OGRFLAGS) -overwrite_ds -single -o $@ $(foreach x,$(^F),/vsizip/$(<D)/$x/$(x:.zip=.shp))
+$(foreach x,AREAWATER LINEARWATER ROADS,$(eval $(call combinecountyfiles,$x)))
 
-roads = $(foreach x,$(ROADS),$(YEAR)/$x.$(format))
-rdfp := $(YEAR)/ROADS/tl_$(YEAR)_$$*$$x_roads.zip
-$(roads): $(YEAR)/ROADS/tl_$(YEAR)_%_roads.$(format): $$(foreach x,$$(COUNTIES_$$*),$(rdfp))
-	ogrmerge.py $(OGRFLAGS) -overwrite_ds -single -o $@ $(foreach x,$(^F),/vsizip/$(<D)/$x/$(x:.zip=.shp))
-
-bgs = $(foreach x,$(BG),$(YEAR)/$(x)_$(SERIES).csv)
-$(bgs): $(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: $$(foreach x,$$(COUNTIES_$$*),$$(@D)/$$*/$$x_$(SERIES).csv) | $$(@D)
-	rm -f $@
+$(foreach x,$(STATE_FIPS),$(YEAR)/BG/tl_$(YEAR)_$x_bg_$(SERIES).csv): \
+$(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: $$(foreach x,$$(COUNTIES_$$*),$$(@D)/$$*/tl_$(YEAR)_$$*_$$x_$(SERIES).csv) | $$(@D)
+	@rm -f $@
 	head -n1 $< > $@
 	for COUNTY in $(COUNTIES_$*); do \
 	    tail -n+2 $(@D)/$*/$${COUNTY}_$(SERIES).csv; \
@@ -285,13 +288,19 @@ TOCSV = 's/,null,/,,/g; \
 	sed $(TOCSV) $< > $@
 
 # Download ACS data
+.PRECIOUS: $(YEAR)/%_$(SERIES).json
 
 # County by state
-NOTINBG = B06011_001E,
-# e.g. 2014/BG/36/047_acs5.json
-$(foreach s,$(STATE_FIPS),$(foreach c,$(COUNTIES_$(s)),$(YEAR)/BG/$(s)/$(c)_$(SERIES).json)): $(YEAR)/BG/%_$(SERIES).json:
-	-@mkdir $(@D)
-	$(subst $(NOTINBG),,$(CURL)) --data for='block+group:*' --data in=state:$(firstword $(subst _, ,$*))+county:$(lastword $(subst /, ,$*))
+
+# e.g. 2014/BG/tl_2016_36_047_acs5.json
+define BG_task
+$$(foreach x,$$(COUNTIES_$(1)),$(YEAR)/BG/$(1)/tl_$(YEAR)_$(1)_$$(x)_$(SERIES).json): \
+$(YEAR)/BG/$(1)/tl_$(YEAR)_$(1)_%_$(SERIES).json: | $(YEAR)/BG/$(1)
+	$$(CURL) --create-dirs --data for='block+group:*' --data in=state:$(1)+county:$$*
+$(YEAR)/BG/$(1): ; mkdir $$@
+endef
+
+$(foreach x,$(STATE_FIPS),$(eval $(call BG_task,$(x))))
 
 # State by state files
 
@@ -347,25 +356,22 @@ data_TTRACT = tribal+census+tract
 data_UAC = urban+area
 data_ZCTA5 = zip+code+tabulation+area
 
-$(YEAR)/%_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=$(data_$(*D)):*'
+direct_data = NATION REGION DIVISION AIANNH AITSN ANRC \
+	CD CBSA CNECTA COUNTY CSA METDIV NECTA NECTADIV \
+	STATE TBG TTRACT UAC ZCTA5 
 
-# INI files with lists of county FIPS
-counties/$(YEAR).ini: | $(YEAR)/$(COUNTY20m).zip counties
-	ogr2ogr /dev/stdout /vsizip/$< -dialect sqlite -f CSV \
-	    -sql "SELECT 'COUNTIES_' || STATEFP || ' = ' || group_concat(COUNTYFP, ' ') \
-	    FROM (SELECT * FROM $(basename $(<F)) ORDER BY COUNTYFP) a GROUP BY STATEFP" | \
-	tail -n+2 > $@
+$(foreach x,$(direct_data),$(YEAR)/$($x)_$(SERIES).json): $(YEAR)/%_$(SERIES).json: | $$(@D)
+	$(CURL) --data 'for=$(data_$(*D)):*'
 
 # Download ZIP files
 
 $(addsuffix .zip,$(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA))): $(YEAR)/%: | $$(@D)
-	ftp -V -o $@ $(SHP_BASE)/$*
+	curl -o $@ --silent --show-error --connect-timeout 3 $(SHP_BASE)/$*
 
 $(addsuffix .zip,$(addprefix $(YEAR)/,$(CARTO) $(CARTO_NODATA))): $(YEAR)/%: | $$(@D)
-	ftp -V -o $@ $(CARTO_BASE)/$(*F)
+	curl -o $@ --silent --show-error --connect-timeout 3 $(CARTO_BASE)/$(*F)
 
 $(sort $(dir $(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA) $(CARTO) $(CARTO_NODATA)))): $(YEAR)
 	-mkdir $@
 
-$(YEAR) counties: ; -mkdir $@
+$(YEAR): ; -mkdir -p $@

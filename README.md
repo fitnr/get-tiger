@@ -121,7 +121,10 @@ make STATE YEAR=2013
 make STATE YEAR=2015
 ```
 
-The `counties` folder contains helper files to track county FIPS codes. If you use a `YEAR` for which an `ini` file doesn't yet exist, the Makefile will automatically try to create it by downloading a county list.
+The `counties` folder contains a helper files for each year to track county FIPS codes. If you want to use a `YEAR` for which an `ini` file doesn't yet exist, use the small `ini.mk` Makefile try to create it by downloading the required county list:
+```
+make -f ini.mk YEAR=2020
+```
 
 ### Data series
 
