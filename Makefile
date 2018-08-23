@@ -288,7 +288,7 @@ TOCSV = 's/,null,/,,/g; \
 	sed $(TOCSV) $< > $@
 
 # Download ACS data
-.PRECIOUS: $(YEAR)/%_$(SERIES).json
+.PRECIOUS: $(YEAR)/%.json
 
 # County by state
 
@@ -302,7 +302,7 @@ endef
 
 $(foreach x,$(STATE_FIPS),$(eval $(call BG_task,$(x))))
 
-# State by state files
+# Data by state files
 
 $(YEAR)/CONCITY/tl_$(YEAR)_%_concity_$(SERIES).json: | $$(@D)
 	$(CURL) --data 'for=consolidated+city:*' --data in=state:$*
