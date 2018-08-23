@@ -23,8 +23,8 @@ STATE_FIPS = 01 02 04 05 06 08 09 10 11 12 13 15 16 17 18 19 20 \
 			 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 \
 			 38 39 40 41 42 44 45 46 47 48 49 50 51 53 54 55 56 72
 
-CARTO_BASE = ftp://ftp2.census.gov/geo/tiger/GENZ$(YEAR)/shp
-SHP_BASE = ftp://ftp2.census.gov/geo/tiger/TIGER$(YEAR)
+CARTO_BASE = https://www2.census.gov/geo/tiger/GENZ$(YEAR)/shp
+SHP_BASE = https://www2.census.gov/geo/tiger/TIGER$(YEAR)
 API_BASE = https://api.census.gov/data
 
 SERIES = acs5
@@ -180,7 +180,7 @@ OUTPUT_FIELDS_10 ?= ROUND(B01003001E / (ALAND10 / 1000000.), 2) AS PopDensKm, \
 CENSUS_DATA_FIELDS = GEO_ID,$(subst $( ) $( ),$(comma),$(DATA_FIELDS))
 
 CURL = curl $(CURLFLAGS)
-CURLFLAGS = -o $@ \
+CURLFLAGS = -Lo $@ \
 	--silent --show-error \
 	--get $(API_BASE)/$(YEAR)/acs/$(SERIES) \
 	--data key=$(KEY) \
@@ -366,10 +366,10 @@ $(foreach x,$(direct_data),$(YEAR)/$($x)_$(SERIES).json): $(YEAR)/%_$(SERIES).js
 # Download ZIP files
 
 $(addsuffix .zip,$(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA))): $(YEAR)/%: | $$(@D)
-	curl -o $@ --silent --show-error --connect-timeout 3 $(SHP_BASE)/$*
+	curl -Lo $@ --silent --show-error --connect-timeout 3 $(SHP_BASE)/$*
 
 $(addsuffix .zip,$(addprefix $(YEAR)/,$(CARTO) $(CARTO_NODATA))): $(YEAR)/%: | $$(@D)
-	curl -o $@ --silent --show-error --connect-timeout 3 $(CARTO_BASE)/$(*F)
+	curl -Lo $@ --silent --show-error --connect-timeout 3 $(CARTO_BASE)/$(*F)
 
 $(sort $(dir $(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA) $(CARTO) $(CARTO_NODATA)))): $(YEAR)
 	-mkdir $@
