@@ -247,7 +247,7 @@ $(foreach x,$(SHPS),$(YEAR)/$x.$(format)): $(YEAR)/%.$(format): $(YEAR)/%.zip $(
 # Totally fake type hinting. A String for GEOID, every other column is an Integer
 %.csvt: %.csv
 	head -n1 $< | \
-	sed 's/^GEOID/"String"/; s/,[A-Za-z0-9_ ]*/,"Integer"/g' > $@
+	sed 's/^GEOID/"String"/; s|,[A-Za-z0-9_/ ]*|,"Integer"|g' > $@
 
 # County by State files
 AREAWATER_base = tl_$(YEAR)_$1_areawater
