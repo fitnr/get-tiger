@@ -364,12 +364,13 @@ $(foreach x,$(direct_data),$(YEAR)/$($x)_$(SERIES).json): $(YEAR)/%_$(SERIES).js
 	$(CURL) --data 'for=$(data_$(*D)):*'
 
 # Download ZIP files
+CURLSHPFLAGS = -Lo $@ -sS --retry 10 --retry-delay 1 --connect-timeout 2
 
 $(addsuffix .zip,$(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA))): $(YEAR)/%: | $$(@D)
-	curl -Lo $@ --silent --show-error --connect-timeout 3 $(SHP_BASE)/$*
+	curl $(CURLSHPFLAGS) $(SHP_BASE)/$*
 
 $(addsuffix .zip,$(addprefix $(YEAR)/,$(CARTO) $(CARTO_NODATA))): $(YEAR)/%: | $$(@D)
-	curl -Lo $@ --silent --show-error --connect-timeout 3 $(CARTO_BASE)/$(*F)
+	curl $(CURLSHPFLAGS) $(CARTO_BASE)/$(*F)
 
 $(sort $(dir $(addprefix $(YEAR)/,$(TIGER) $(TIGER_NODATA) $(CARTO) $(CARTO_NODATA)))): $(YEAR)
 	-mkdir $@
