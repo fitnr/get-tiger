@@ -42,14 +42,14 @@ CARTOGRAPHIC ?= true
 ifeq ($(CARTOGRAPHIC),true)
     base = $(1)/cb_$(YEAR)_$(2)_$(3)_500k
 
-    carto_national = $(AIANNH) $(ANRC) $(COUNTY) $(CD) $(STATE)
+    carto_national = $(AIANNH) $(ANRC) $(COUNTY) $(CD) $(STATE) $(ZCTA5)
     CARTO_BY_STATE = $(COUSUB) $(PLACE) $(SLDL) $(SLDU) $(TRACT)
     carto_nodata = $(SUBBARRIO)
 
 else
     base = $(1)/tl_$(YEAR)_$(2)_$(3)
 
-    tiger_national = $(AIANNH) $(ANRC) $(COUNTY) $(CD) $(STATE)
+    tiger_national = $(AIANNH) $(ANRC) $(COUNTY) $(CD) $(STATE) $(ZCTA5)
     tiger_by_state = $(COUSUB) $(PLACE) $(SLDL) $(SLDU) $(TRACT)
     tiger_nodata = $(SUBBARRIO)
 endif
@@ -129,20 +129,21 @@ TRACT = $(foreach f,$(STATE_FIPS),$(call base,TRACT,$(f),tract))
 UAC = UAC/cb_$(YEAR)_us_ua10_500k
 UNSD = $(foreach f,$(STATE_FIPS),UNSD/tl_$(YEAR)_$f_unsd)
 
-ZCTA5 = ZCTA5/cb_$(YEAR)_us_zcta510_500k
+ZCTA5 = $(call base,ZCTA5,us,zcta510)
 
 # lists of data (two kinds of files)
+
+# Data sets that need to be joined w/ 'GEOID10' instead of GEOID.
+NATIONAL_2010 = $(UAC) $(ZCTA5)
 
 # 1. Cartographic boundary files
 # National data sets
 CARTO_NATIONAL = $(carto_national) $(DIVISION) $(REGION)
-# Data sets that need to be joined w/ 'GEOID10' instead of GEOID.
-CARTO_2010 = $(UAC) $(ZCTA5)
 # Per-state data sets that need to be joined w/ 'GEOID10' instead of GEOID.
 CARTO_2010_STATE = $(PUMA)
 CARTO_NODATA = $(carto_nodata) $(NATION) $(COUNTY_WITHIN_UA) $(COUNTY20m)
 
-CARTO = $(CARTO_NATIONAL) $(CARTO_2010) $(CARTO_BY_STATE) $(CARTO_2010_STATE)
+CARTO = $(CARTO_NATIONAL) $(UAC) $(CARTO_BY_STATE) $(CARTO_2010_STATE)
 
 # 2. TIGER data files
 # National data sets
@@ -227,13 +228,13 @@ SELECTION = -dialect sqlite -sql "SELECT *, \
     ROUND(ALAND$(2)/1000000., 3) LANDKM, ROUND(AWATER$(2)/1000000., 3) WATERKM \
     FROM $(*F) a LEFT JOIN '$(lastword $^)'.$(basename $(lastword $(^F))) b ON (a.GEOID$(2) = b.GEOID)"
 
-SHPS_2010 = $(CARTO_2010) $(CARTO_2010_STATE)
+SHPS_2010 = $(NATIONAL_2010) $(CARTO_2010_STATE)
 
 $(foreach x,$(SHPS_2010),$(YEAR)/$x.$(format)): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 	@rm -f $@
 	ogr2ogr $@ /vsizip/$< $(OGRFLAGS) $(call SELECTION,$(OUTPUT_FIELDS_10),10)
 
-SHPS = $(CARTO_NATIONAL) $(CARTO_BY_STATE) $(TIGER_NATIONAL) $(TIGER_BY_STATE))
+SHPS = $(filter-out $(SHPS_2010),$(CARTO_NATIONAL) $(CARTO_BY_STATE) $(TIGER_NATIONAL) $(TIGER_BY_STATE))
 
 $(foreach x,$(SHPS),$(YEAR)/$x.$(format)): $(YEAR)/%.$(format): $(YEAR)/%.zip $(YEAR)/%_$(SERIES).dbf
 	@rm -f $@
