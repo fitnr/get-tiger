@@ -271,7 +271,7 @@ $(YEAR)/BG/tl_$(YEAR)_%_bg_$(SERIES).csv: $$(foreach x,$$(COUNTIES_$$*),$$(@D)/$
 	@rm -f $@
 	head -n1 $< > $@
 	for COUNTY in $(COUNTIES_$*); do \
-	    tail -n+2 $(@D)/$*/$${COUNTY}_$(SERIES).csv; \
+	    tail -n+2 $(@D)/$*/tl_$(YEAR)_$*_$${COUNTY}_$(SERIES).csv; \
 	done >> $@
 
 # Census API json has a strange CSV-like format, includes "YY000US" prefix on GEOID.
