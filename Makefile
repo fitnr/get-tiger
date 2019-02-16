@@ -63,7 +63,7 @@ ifeq ($(wildcard counties/$(YEAR)/*),"")
     ROADSCOUNTY =
 
 else
-    COUNTY_FIPS = $(foreach a,$(STATE_FIPS),$(addprefix $a,$(COUNTIES_$(a))))
+    COUNTY_FIPS ?= $(foreach a,$(STATE_FIPS),$(addprefix $a,$(COUNTIES_$(a))))
     AREAWATERCOUNTY = $(foreach f,$(COUNTY_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater)
     AREAWATER = $(foreach f,$(STATE_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater)
     LINEARWATER = $(foreach f,$(STATE_FIPS),LINEARWATER/tl_$(YEAR)_$f_linearwater)
