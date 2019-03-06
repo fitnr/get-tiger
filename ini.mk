@@ -8,7 +8,7 @@ counties/$(YEAR).ini: $(YEAR)/COUNTY/$(YEAR)_Gaz_counties_national.zip | countie
 	  {for (i in arr) {print "COUNTIES_" i " ="arr[i] } }' | \
 	sort > $@
 
-$(YEAR)/COUNTY/2017_Gaz_counties_national.zip: | $(YEAR)/COUNTY
+$(YEAR)/COUNTY/$(YEAR)_Gaz_counties_national.zip: | $(YEAR)/COUNTY
 	curl -Lo $@ http://www2.census.gov/geo/docs/maps-data/data/gazetteer/$(YEAR)_Gazetteer/$(@F)
 
 $(YEAR)/COUNTY counties: ; mkdir -p $@
