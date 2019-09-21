@@ -4,9 +4,9 @@
         "concept": "B01003.  Total Population",
         "predicateType": "int"
     },
-    "B06011_001E": {
-        "label": "Median income in the past 12 months --!!Total:",
-        "concept": "B06011. Median Income in the Past 12 Months (in 2014 Inflation-Adjusted Dollars) by Place of Birth in the United States",
+    "B19013_001E": {
+        "label": "Estimate!!Median household income in the past 12 months (in 2017 inflation-adjusted dollars)",
+        "concept": "MEDIAN HOUSEHOLD INCOME IN THE PAST 12 MONTHS (IN 2017 INFLATION-ADJUSTED DOLLARS)",
         "predicateType": "int"
     },
     "B08101_001E": {
