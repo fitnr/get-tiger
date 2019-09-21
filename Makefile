@@ -184,9 +184,9 @@ CENSUS_DATA_FIELDS = GEO_ID,$(subst $( ) $( ),$(comma),$(DATA_FIELDS))
 CURL = curl $(CURLFLAGS)
 CURLFLAGS = -Lo $@ \
 	--silent --show-error \
-	--get $(API_BASE)/$(YEAR)/acs/$(SERIES) \
-	--data key=$(KEY) \
-	--data get=$(CENSUS_DATA_FIELDS)
+	--get '$(API_BASE)/$(YEAR)/acs/$(SERIES)' \
+	--data 'key=$(KEY)' \
+	--data 'get=$(CENSUS_DATA_FIELDS)'
 
 format = shp
 driver.shp  = 'ESRI Shapefile'
@@ -298,7 +298,7 @@ TOCSV = 's/,null,/,,/g; \
 define BG_task
 $$(foreach x,$$(COUNTIES_$(1)),$(YEAR)/BG/$(1)/tl_$(YEAR)_$(1)_$$(x)_$(SERIES).json): \
 $(YEAR)/BG/$(1)/tl_$(YEAR)_$(1)_%_$(SERIES).json: | $(YEAR)/BG/$(1)
-	$$(CURL) --create-dirs --data for='block+group:*' --data in=state:$(1)+county:$$*
+	$$(CURL) --create-dirs --data 'for=block+group:*' --data 'in=state:$(1)+county:$$*'
 $(YEAR)/BG/$(1): ; mkdir $$@
 endef
 
@@ -307,34 +307,34 @@ $(foreach x,$(STATE_FIPS),$(eval $(call BG_task,$(x))))
 # Data by state files
 
 $(YEAR)/CONCITY/tl_$(YEAR)_%_concity_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=consolidated+city:*' --data in=state:$*
+	$(CURL) --data 'for=consolidated+city:*' --data 'in=state:$*'
 
 $(YEAR)/$(call base,COUSUB,%,cousub)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=county+subdivision:*' --data in=state:$*
+	$(CURL) --data 'for=county+subdivision:*' --data 'in=state:$*'
 
 $(YEAR)/ELSD/tl_$(YEAR)_%_elsd_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=school+district+(elementary):*' --data in=state:$*
+	$(CURL) --data 'for=school+district+(elementary):*' --data 'in=state:$*'
 
 $(YEAR)/$(call base,PLACE,%,place)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=place:*' --data in=state:$*
+	$(CURL) --data 'for=place:*' --data 'in=state:$*'
 
 $(YEAR)/PUMA/cb_$(YEAR)_%_puma10_500k_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=public+use+microdata+area:*' --data in=state:$*
+	$(CURL) --data 'for=public+use+microdata+area:*' --data 'in=state:$*'
 
 $(YEAR)/SCSD/tl_$(YEAR)_%_scsd_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=school+district+(secondary):*' --data in=state:$*
+	$(CURL) --data 'for=school+district+(secondary):*' --data 'in=state:$*'
 
 $(YEAR)/$(call base,SLDL,%,sldl)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=state+legislative+district+(lower+chamber):*' --data in=state:$*
+	$(CURL) --data 'for=state+legislative+district+(lower+chamber):*' --data 'in=state:$*'
 
 $(YEAR)/$(call base,SLDU,%,sldu)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=state+legislative+district+(upper+chamber):*' --data in=state:$*
+	$(CURL) --data 'for=state+legislative+district+(upper+chamber):*' --data 'in=state:$*'
 
 $(YEAR)/$(call base,TRACT,%,tract)_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=tract:*' --data in=state:$*
+	$(CURL) --data 'for=tract:*' --data 'in=state:$*'
 
 $(YEAR)/UNSD/tl_$(YEAR)_%_unsd_$(SERIES).json: | $$(@D)
-	$(CURL) --data 'for=school+district+(unified):*' --data in=state:$*
+	$(CURL) --data 'for=school+district+(unified):*' --data 'in=state:$*'
 
 # Carto boundary files and National data files
 
