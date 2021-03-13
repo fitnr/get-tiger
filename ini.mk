@@ -1,4 +1,4 @@
-YEAR = 2017
+YEAR = 2020
 
 # INI files with lists of county FIPS
 counties/$(YEAR).ini: $(YEAR)/COUNTY/$(YEAR)_Gaz_counties_national.zip | counties
@@ -9,6 +9,6 @@ counties/$(YEAR).ini: $(YEAR)/COUNTY/$(YEAR)_Gaz_counties_national.zip | countie
 	sort > $@
 
 $(YEAR)/COUNTY/$(YEAR)_Gaz_counties_national.zip: | $(YEAR)/COUNTY
-	curl -Lo $@ http://www2.census.gov/geo/docs/maps-data/data/gazetteer/$(YEAR)_Gazetteer/$(@F)
+	curl -Lo $@ ftp://ftp2.census.gov/geo/docs/maps-data/data/gazetteer/$(YEAR)_Gazetteer/$(@F)
 
 $(YEAR)/COUNTY counties: ; mkdir -p $@
