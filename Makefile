@@ -37,12 +37,14 @@ DATASETS = AREAWATER NATION REGION DIVISION AIANNH AITSN ANRC \
 	PRIMARYROADS PUMA RAILS ROADS SCSD SLDL SLDU STATE SUBBARRIO \
 	TABBLOCK TBG TTRACT TRACT UAC UNSD ZCTA5
 
-# Some files can be drawn from the cartographic boundary or tiger datasets.
+# Some files can be drawn from the cartographic boundary or tiger geodata.
 # Default is cartographic.
 CARTOGRAPHIC ?= true
+# Other valid values: 20m, 5m
+RESOLUTION := 500k
 
 ifeq ($(CARTOGRAPHIC),true)
-    base = $(1)/cb_$(YEAR)_$(2)_$(3)_500k
+    base = $(1)/cb_$(YEAR)_$(2)_$(3)_$(RESOLUTION)
 
     carto_national = $(AIANNH) $(ANRC) $(COUNTY) $(CD) $(STATE) $(ZCTA5)
     CARTO_BY_STATE = $(COUSUB) $(PLACE) $(SLDL) $(SLDU) $(TRACT)
