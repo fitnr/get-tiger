@@ -7,10 +7,12 @@
 
 # Year of census data.
 # Check API for most recent year available
+SHELL := bash
+
 include key.ini
 
-YEAR = 2016
-CONGRESS = 115
+YEAR := 2020
+CONGRESS := 116
 
 include counties/$(YEAR).ini
 
