@@ -138,5 +138,47 @@
         "label": "Median monthly housing costs",
         "concept": "B25105.  MEDIAN MONTHLY HOUSING COSTS (DOLLARS)",
         "predicateType": "int"
+    },
+    "B02001_001E": {
+        "label": "Estimate!!Total",
+        "concept": "RACE"
+    },
+    "B02001_002E": {
+        "label": "Estimate!!Total!!White alone",
+        "concept": "RACE"
+    },
+    "B02001_003E": {
+        "label": "Estimate!!Total!!Black or African American alone",
+        "concept": "RACE"
+    },
+    "B02001_004E": {
+        "label": "Estimate!!Total!!American Indian and Alaska Native alone",
+        "concept": "RACE"
+    },
+    "B02001_005E": {
+        "label": "Estimate!!Total!!Asian alone",
+        "concept": "RACE"
+    },
+    "B02001_006E": {
+        "label": "Estimate!!Total!!Native Hawaiian and Other Pacific Islander alone",
+        "concept": "RACE"
+    },
+    "B02001_007E": {
+        "label": "Estimate!!Total!!Some other race alone ",
+        "concept": "RACE"
+    },
+    "B02001_008E": {
+        "label": "Estimate!!Total!!Two or more races",
+        "concept": "RACE"
+    },
+    "B02001_009E": {
+        "label": "Estimate!!Total!!Two or more races!!Two races including Some other race",
+        "concept": "RACE"
+    },
+    "B02001_010E": {
+        "label": "Estimate!!Total!!Two or more races!!Two races excluding Some other race and three or more races",
+        "concept": "RACE"
     }
+
 }
+
