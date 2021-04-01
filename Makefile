@@ -9,8 +9,6 @@
 # Check API for most recent year available
 SHELL := bash
 
-include key.ini
-
 YEAR := 2019
 CONGRESS := 116
 
