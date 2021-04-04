@@ -6,21 +6,10 @@ Get-tiger uses `make`, a tried-and-true tool for processing series of files, to 
 
 ## Requirements
 
-* Make (tested with GNU make 3.81, other versions should work fine)
-* `ogr2ogr` ([GDAL](http://www.gdal.org)) (v1.10+)
+* [Make](https://www.gnu.org/software/make/) (tested with GNU make 3.81, other versions should work fine)
+* [wget](https://www.gnu.org/software/wget/): a utility for downloading files that's probably already installed on your machine
 
-GDAL is an open-source geospatial library that includes `ogr2ogr`, a commmand-line tool for modifying GIS data. We'll be using it to join CSVs to Shapefiles.
-
-OS X:
-* install make with: `xcode-select --install`.
-* For GDAL, install [Homebrew](http://brew.sh) and run: `brew install gdal`.
-
-Windows:
-* Download [make](http://gnuwin32.sourceforge.net/packages/make.htm)
-* Install [OSGeo4W](http://trac.osgeo.org/osgeo4w/) to get GDAL
-
-Linux (CentOS):
-* `sudo apt-get install build-essential g++ libgdal1-dev gdal-bin`
+Some helper commands require [GDAL](https://gdal.org), is an open-source geospatial library that includes commmand-line tools for modifying GIS data. If you don't have access to GDAL, set the `GDAL=false` variable, and those commands will be skipped.
 
 ## Install
 
@@ -47,11 +36,13 @@ make NATION STATE
 make COUNTY TRACT
 ````
 
-Make will run the commands to download the shapefiles and data from the Census, then join them. You'll see the commands run on your screen, sit back and enjoy the show. The files will end up in a directory called `2014/`. At the end, you'll get a list of the files created, e.g.:
+Make will run the commands to download the shapefiles and data from the Census, then join them. You'll see the commands run on your screen, sit back and enjoy the show. The files will end up in a directory called `2019/`. 
 ```bash
-make NATION STATE
-...
-2014/NATION/cb_2014_us_nation_5m.shp 2014/STATE/tl_2014_us_state.shp
+> make NATION STATE
+mkdir -p 2019/NATION
+wget -q -nc -t 10 --waitretry 1 --timeout 2 ftp://ftp2.census.gov/geo/tiger/GENZ2019/shp/cb_2019_us_nation_5m.zip -o 2019/NATION/cb_2019_us_nation_5m.zip
+mkdir -p 2019/STATE
+wget -q -nc -t 10 --waitretry 1 --timeout 2 ftp://ftp2.census.gov/geo/tiger/GENZ2019/shp/cb_2019_us_state_500k.zip -o 2019/STATE/cb_2019_us_state_500k.zip
 ```
 
 Some commands will download many files. For instance, this will download files for the fifty states, DC and Puerto Rico:
@@ -72,10 +63,11 @@ You may find a [list of state fips codes](https://en.wikipedia.org/wiki/Federal_
 
 ## Which maps
 
-The Census publishes two sets of map data: [Cartographic Boundary](http://www.census.gov/geo/maps-data/data/tiger-cart-boundary.html) files and [TIGER/Line](http://www.census.gov/geo/maps-data/data/tiger-line.html). The main difference is that cartographic boundaries files are clipped to the coastline. These are the default for `get-tiger`. To always fetch TIGER/Line files, set `CARTOGRAPHIC=false`:
+The Census publishes two sets of map data: [Cartographic Boundary](http://www.census.gov/geo/maps-data/data/tiger-cart-boundary.html) files and [TIGER/Line](http://www.census.gov/geo/maps-data/data/tiger-line.html). The main difference is that cartographic boundaries files are clipped to the coastline. These are the default for `get-tiger`. The cartographic files are only available for some data sets. To always fetch TIGER/Line files, set `CARTOGRAPHIC=false`:
 ```
 make TRACT CARTOGRAPHIC=false
 ```
+
 ### Vintage
 
 By default, the Makefile downloads 2019 data. For older years (or newer years, if it's the future), use the `YEAR` variable:
@@ -124,12 +116,6 @@ Get-tiger includes shortcut tasks like this for the following geographies. They 
 * zip code tabulations areas (`ZCTA5`)
 * high-level subdivisions (`NATION`, `DIVISION`, `REGION`)
 
-The following datasets require the `CARTOGRAPHIC` variable to be set to "false":
-```
-AREAWATER
-LINEARWATER
-ROADS
-```
 
 ### Format
 

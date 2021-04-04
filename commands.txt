@@ -26,7 +26,7 @@ PRIMARYROADS - Primary roads [national]
 PRISECROADS - Primary and secondary roads [by state]
 PUMA - Public use microdata areas
 RAILS - Railroads
-ROADS - Roads. Downloads one file for each county, then combines into state-level files (requires CARTOGRAPHIC=false).
+ROADS - Roads. Download one file for each county, then combine into state-level files.
 SCSD - Secondary school districts 
 SLDL - State legislative districts [lower chamber]
 SLDU - State legislative districts [upper chamber]
@@ -39,5 +39,5 @@ TTRACT - Tribal Census tracts
 UAC - Urbanized areas
 UNSD - Unified school districts
 ZCTA5 - Zip code tabulation areas
-AREAWATER - Water polygons. Downloads one file for each county, then combines into state-level files (requires CARTOGRAPHIC=false).
-LINEARWATER - Water lines. Downloads one file for each county, then combines into state-level files (requires CARTOGRAPHIC=false).
+AREAWATER - Water polygons. Download one file for each county, then combine into state-level files.
+LINEARWATER - Water lines. Download one file for each county, then combine into state-level files.

@@ -4,13 +4,22 @@
 # Licensed under the GNU General Public License v3 (GPLv3) license:
 # http://opensource.org/licenses/GPL-3.0
 # Copyright (c) 2016, Neil Freeman <contact@fakeisthenewreal.org>
+SHELL := /bin/bash
 
-# Year of census data.
-# Check API for most recent year available
-SHELL := bash
-
+# Year of census data - check Census site for most recent year available.
 YEAR := 2019
+
+# Congressional districts are updated every two years.
 CONGRESS := 116
+
+# Some files can be drawn from the cartographic boundary or tiger geodata. Default is cartographic.
+CARTOGRAPHIC ?= true
+
+# Other valid values: 20m, 5m
+RESOLUTION := 500k
+
+# user-reported flag for the presence of GDAL. We assume it is installed.
+GDAL := true
 
 include counties/$(YEAR).ini
 
@@ -21,36 +30,31 @@ STATE_FIPS = 01 02 04 05 06 08 09 10 11 12 13 15 16 17 18 19 20 \
 			 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 \
 			 38 39 40 41 42 44 45 46 47 48 49 50 51 53 54 55 56 72
 
-SERIES = acs5
-
 DATASETS = AREAWATER NATION REGION DIVISION AIANNH AITSN ANRC \
 	BG CBSA CD CNECTA CONCITY COUNTY COUNTY_WITHIN_UA COUSUB CSA \
 	ELSD ESTATE LINEARWATER METDIV MIL NECTA NECTADIV PLACE \
 	PUMA RAILS ROADS SCSD SLDL SLDU STATE SUBBARRIO \
 	TABBLOCK TBG TTRACT TRACT UAC UNSD ZCTA5
 
-# Some files can be drawn from the cartographic boundary or tiger geodata.
-# Default is non-cartographic.
-CARTOGRAPHIC ?= true
-# Other valid values: 20m, 5m
-RESOLUTION := 500k
-
 ifeq ($(CARTOGRAPHIC),true)
 
-base      = $(1)/cb_$(YEAR)_$(2)_$(3)_$(RESOLUTION).zip
-url      := ftp://ftp2.census.gov/geo/tiger/GENZ$(YEAR)/shp
+base  = $(1)/cb_$(YEAR)_$(2)_$(3)_$(RESOLUTION).zip
+url  := ftp://ftp2.census.gov/geo/tiger/GENZ$(YEAR)/shp
 
-# Set cartographic-only slugs
+else
+
+base  = $(1)/tl_$(YEAR)_$(2)_$(3).zip
+url  := ftp://ftp2.census.gov/geo/tiger/TIGER$(YEAR)
+
+endif # ifeq ($(CARTOGRAPHIC),true)
+
+# cartographic-only slugs
 DIVISION := DIVISION/cb_$(YEAR)_us_division_5m.zip
 NATION   := NATION/cb_$(YEAR)_us_nation_5m.zip
 REGION   := REGION/cb_$(YEAR)_us_region_500k.zip
 COUNTY_WITHIN_UA := $(foreach f,$(STATE_FIPS),COUNTY_WITHIN_UA/cb_$(YEAR)_$f_county_within_ua_$(RESOLUTION).zip)
 
-else
-
-base      = $(1)/tl_$(YEAR)_$(2)_$(3).zip
-url      := ftp://ftp2.census.gov/geo/tiger/TIGER$(YEAR)
-# Set tigerline-only slugs
+# Set tiger-line-only slugs
 AITSN    := AITSN/tl_$(YEAR)_us_aitsn.zip
 CBSA     := CBSA/tl_$(YEAR)_us_cbsa.zip
 CNECTA   := CNECTA/tl_$(YEAR)_us_cnecta.zip
@@ -77,10 +81,9 @@ AREAWATER     := $(foreach f,$(STATE_FIPS),AREAWATER/tl_$(YEAR)_$f_areawater.shp
 LINEARWATER   := $(foreach f,$(STATE_FIPS),LINEARWATER/tl_$(YEAR)_$f_linearwater.shp)
 linearwatercounty = $(foreach f,$(COUNTY_FIPS),LINEARWATER/tl_$(YEAR)_$f_linearwater.zip)
 ROADS         := $(foreach f,$(STATE_FIPS),ROADS/tl_$(YEAR)_$f_roads.shp)
-roadscounty = $(foreach f,$(COUNTY_FIPS),ROADS/tl_$(YEAR)_$f_roads.zip)
+roadscounty    = $(foreach f,$(COUNTY_FIPS),ROADS/tl_$(YEAR)_$f_roads.zip)
 
 endif # ifeq ($(wildcard counties/$(YEAR)/*),"")
-endif # ifeq ($(CARTOGRAPHIC),true)
 
 # general file definitions
 AIANNH   := $(call base,AIANNH,us,aiannh)
@@ -105,52 +108,53 @@ SUBBARRIO:= $(call base,SUBBARRIO,72,subbarrio)
 TRACT    := $(foreach f,$(STATE_FIPS),$(call base,TRACT,$(f),tract))
 ZCTA5    := $(call base,ZCTA5,us,zcta510.zip)
 
-# National data sets - one file for the country
-zip_national = \
+# data sets that could be cartographic or tiger-line
+carto-or-tiger = \
 	$(AIANNH) \
+	$(ANRC) \
+	$(BG) \
+	$(CD) \
+	$(CONCITY) \
+	$(COUNTY) \
+	$(COUSUB) \
+	$(CSA) \
+	$(ELSD) \
+	$(PLACE) \
+	$(PUMA) \
+	$(SLDL) \
+	$(SLDU) \
+	$(STATE) \
+	$(SUBBARRIO) \
+	$(TRACT) \
+	$(ZCTA5) \
+
+cartographic-only = \
+	$(DIVISION) \
+	$(NATION) \
+	$(REGION) \
+	$(COUNTY_WITHIN_UA)
+
+tiger-only = \
 	$(AITSN) \
 	$(CBSA) \
-	$(CD) \
 	$(CNECTA) \
-	$(COUNTY) \
-	$(CSA) \
-	$(DIVISION) \
+	$(ESTATE) \
 	$(METDIV) \
 	$(MIL) \
-	$(NATION) \
 	$(NECTA) \
 	$(NECTADIV) \
 	$(RAILS) \
-	$(REGION) \
-	$(TBG) \
-	$(UAC) \
-	$(ZCTA5)
-
-# State data sets - one file per state-equivalent
-zip_state = \
-	$(BG) \
-	$(CONCITY) \
-	$(COUNTY_WITHIN_UA) \
-	$(COUSUB) \
-	$(ELSD) \
-	$(ESTATE) \
-	$(PLACE) \
-	$(PUMA) \
 	$(SCSD) \
-	$(SLDL) \
-	$(SLDU) \
 	$(TABBLOCK) \
-	$(TRACT) \
+	$(TBG) \
 	$(TTRACT) \
-	$(UNSD)
-
-# County data sets - one file per county-equivalent
-zip_county = \
+	$(UAC) \
+	$(UNSD) \
 	$(areawatercounty) \
 	$(linearwatercounty) \
 	$(roadscounty)
 
-zipfiles = $(addprefix $(YEAR)/,$(zip_national) $(zip_state) $(zip_county))
+zips = $(addprefix $(YEAR)/,$(carto-or-tiger) $(cartographic-only) $(tiger-only))
 
 export CPL_MAX_ERROR_REPORTS=3
 
@@ -166,33 +170,52 @@ help: commands.txt
 	@echo CARTOGRAPHIC = $(CARTOGRAPHIC)
 	@echo RESOLUTION   = $(RESOLUTION)
 	@echo STATE_FIPS   = $(STATE_FIPS)
+	@echo GDAL         = $(GDAL)
 
 .SECONDEXPANSION:
 
-# Merged file shortcuts
-
-merge = BG COUNTY_WITHIN_UA COUSUB ELSD PLACE PRISECROADS PUMA SCSD SLDL SLDU TABBLOCK TRACT UNSD
-merge_shp = $(foreach x,$(merge),$(YEAR)/$x.shp)
-
-$(merge_shp): $(YEAR)/%.shp: $$(addprefix $(YEAR)/,$$($$*))
-	@rm -rf $@
-	ogrmerge.py -f 'ESRI Shapefile' -single -field_strategy FirstLayer -o $@ $(foreach x,$^,/vsizip/$(x)/$(notdir $(x:zip=shp)))
-
+# Dataset commands, e.g. BG and TRACT
 $(DATASETS): $$(addprefix $(YEAR)/,$$($$@))
 
+# Merged file shortcuts
+
+merge = BG COUNTY_WITHIN_UA COUSUB ELSD PLACE PRISECROADS PUMA SCSD SLDL SLDU TABBLOCK TRACT UNSD AREAWATER
+merge-shp = $(foreach x,$(merge),$(YEAR)/$x.shp)
+
+ifeq ($(GDAL),true)
+
+define merge-command
+ogrmerge.py -f 'ESRI Shapefile' -overwrite_ds -single -o $@ $(foreach f,$^,/vsizip/$(f)/$(notdir $(f:zip=shp)))
+endef
+
+else
+
+define merge-command
+@echo "unable to create $@ because GDAL isn't installed. These source files have been downloaded:"
+@echo $^
+endef
+
+endif # ifeq ($(GDAL),true)
+
+$(merge-shp): $(YEAR)/%.shp: $$(addprefix $(YEAR)/,$$($$*))
+	$(merge-command)
+
+# commands that merge county-level files
+
 $(addprefix $(YEAR)/,$(AREAWATER)): $(YEAR)/AREAWATER/tl_$(YEAR)_%_areawater.shp: $$(foreach x,$$(COUNTIES_$$*),$(YEAR)/AREAWATER/tl_$(YEAR)_$$*$$x_areawater.zip)
-	ogrmerge.py -f 'ESRI Shapefile' -single -o $@ $(foreach f,$^,/vsizip/$f/$(notdir $(f:zip=shp)))
+	$(merge-command)
 
 $(addprefix $(YEAR)/,$(LINEARWATER)): $(YEAR)/LINEARWATER/tl_$(YEAR)_%_linearwater.shp: $$(foreach x,$$(COUNTIES_$$*),$(YEAR)/LINEARWATER/tl_$(YEAR)_$$*$$x_linearwater.zip)
-	ogrmerge.py -f 'ESRI Shapefile' -single -o $@ $(foreach f,$^,/vsizip/$f/$(notdir $(f:zip=shp)))
+	$(merge-command)
 
 $(addprefix $(YEAR)/,$(ROADS)): $(YEAR)/ROADS/tl_$(YEAR)_%_roads.shp: $$(foreach x,$$(COUNTIES_$$*),$(YEAR)/ROADS/tl_$(YEAR)_$$*$$x_roads.zip)
-	ogrmerge.py -f 'ESRI Shapefile' -single -o $@ $(foreach f,$^,/vsizip/$f/$(notdir $(f:zip=shp)))
+	$(merge-command)
 
 # Download ZIP files
+
 wget := wget -q -nc -t 10 --waitretry 1 --timeout 2
 
-$(zipfiles): $(YEAR)/%.zip: | $$(@D)
+$(zips): $(YEAR)/%.zip: | $$(@D)
 ifeq ($(CARTOGRAPHIC),true)
 	$(wget) $(url)/$(@F) -o $@
 else
