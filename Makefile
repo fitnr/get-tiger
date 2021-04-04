@@ -39,7 +39,7 @@ RESOLUTION := 500k
 
 ifeq ($(CARTOGRAPHIC),true)
 
-base      = cb_$(YEAR)_$(2)_$(3)_$(RESOLUTION).zip
+base      = $(1)/cb_$(YEAR)_$(2)_$(3)_$(RESOLUTION).zip
 url      := ftp://ftp2.census.gov/geo/tiger/GENZ$(YEAR)/shp
 
 # Set cartographic-only slugs
@@ -197,9 +197,14 @@ $(addprefix $(YEAR)/,$(ROADS)): $(YEAR)/ROADS/tl_$(YEAR)_%_roads.shp: $$(foreach
 	ogrmerge.py -f 'ESRI Shapefile' -single -o $@ $(foreach f,$^,/vsizip/$f/$(notdir $(f:zip=shp)))
 
 # Download ZIP files
+wget := wget -q -nc -t 10 --waitretry 1 --timeout 2
 
 $(zipfiles): $(YEAR)/%.zip: | $$(@D)
-	curl -Lo $@ -sS --retry 10 --retry-delay 1 --connect-timeout 2 $(url)/$(subst $(YEAR)/,,$@)
+ifeq ($(CARTOGRAPHIC),true)
+	$(wget) $(url)/$(@F) -o $@
+else
+	$(wget) $(url)/$(subst $(YEAR)/,,$@) -O $@
+endif
 
 $(addprefix $(YEAR)/,$(DATASETS)): $(YEAR)
 	-mkdir -p $@
