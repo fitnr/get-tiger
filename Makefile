@@ -14,8 +14,6 @@ CONGRESS := 116
 
 include counties/$(YEAR).ini
 
-export KEY YEAR
-
 .SUFFIXES:
 
 comma = ,
@@ -182,22 +180,11 @@ $(merge_shp): $(YEAR)/%.shp: $$(addprefix $(YEAR)/,$$($$*))
 
 $(DATASETS): $$(addprefix $(YEAR)/,$$($$@))
 
-# define combinecountyfiles
-# $(foreach x,$($1),$(YEAR)/$x.$(format)): \
-# $(YEAR)/$1/$(call $(1)_base,%).$(format): $$$$(foreach x,$$$$(COUNTIES_$$$$*),$(YEAR)/$1/$(call $(1)_base,$$$$*$$$$x).zip)
-# 	@rm -f $$@
-# 	for c in $$(COUNTIES_$$*); do \
-# 	  ogr2ogr -f 'ESRI Shapefile' $$@ /vsizip/$$(<D)/$$(call $(1)_base,$$*$$$${c}).zip $$(call $(1)_base,$$*$$$${c}) $(OGRFLAGS) -update -append; \
-# 	done
-# endef
+$(addprefix $(YEAR)/,$(AREAWATER)): $(YEAR)/AREAWATER/tl_$(YEAR)_%_areawater.shp: $$(foreach x,$$(COUNTIES_$$*),$(YEAR)/AREAWATER/tl_$(YEAR)_$$*$$x_areawater.zip)
+	ogrmerge.py -f 'ESRI Shapefile' -single -o $@ $(foreach f,$^,/vsizip/$f/$(notdir $(f:zip=shp)))
 
-# $(foreach x,AREAWATER LINEARWATER ROADS,$(eval $(call combinecountyfiles,$x)))
-
-$(addprefix $(YEAR)/,$(AREAWATER)): $(YEAR)/LINEARWATER
-	echo foo
-
-$(addprefix $(YEAR)/,$(LINEARWATER)):
-	echo foo
+$(addprefix $(YEAR)/,$(LINEARWATER)): $(YEAR)/LINEARWATER/tl_$(YEAR)_%_linearwater.shp: $$(foreach x,$$(COUNTIES_$$*),$(YEAR)/LINEARWATER/tl_$(YEAR)_$$*$$x_linearwater.zip)
+	ogrmerge.py -f 'ESRI Shapefile' -single -o $@ $(foreach f,$^,/vsizip/$f/$(notdir $(f:zip=shp)))
 
 $(addprefix $(YEAR)/,$(ROADS)): $(YEAR)/ROADS/tl_$(YEAR)_%_roads.shp: $$(foreach x,$$(COUNTIES_$$*),$(YEAR)/ROADS/tl_$(YEAR)_$$*$$x_roads.zip)
 	ogrmerge.py -f 'ESRI Shapefile' -single -o $@ $(foreach f,$^,/vsizip/$f/$(notdir $(f:zip=shp)))

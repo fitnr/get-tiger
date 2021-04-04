@@ -124,9 +124,16 @@ Get-tiger includes shortcut tasks like this for the following geographies. They 
 * zip code tabulations areas (`ZCTA5`)
 * high-level subdivisions (`NATION`, `DIVISION`, `REGION`)
 
+The following datasets require the `CARTOGRAPHIC` variable to be set to "false":
+```
+AREAWATER
+LINEARWATER
+ROADS
+```
+
 ### Format
 
-This thing spits out the zipped shapefiles downloaded from the census. For AREAWATER, LINEARWATER and ROADS, which come packaged as one file per county, the data is automatically merged to state-level files.
+This thing spits out the zipped shapefiles downloaded from the census. For AREAWATER, LINEARWATER and ROADS, which come packaged as one file per county, the data is automatically merged to state-level unzipped shape files.
 
 ## License
 
