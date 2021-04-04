@@ -89,7 +89,13 @@ The `counties` folder contains a helper files for each year to track county FIPS
 make -f ini.mk YEAR=2020
 ```
 
-You can add in options for different `DATA_FIELDS` as described above. To run this task for a different year, you'll need to change the year twice (`make 2013/BG.shp YEAR=2013`).
+### Secret bonus tasks for merging data
+
+A relatively common task is to download a national set of geographies of a certain type. Run this to download a national dataset of block groups: 
+```bash
+make 2014/BG.shp
+```
+You can add in options for different `DATA_FIELDS` as described above. To run this task for a different year, you'll need to change the year twice (`make 2019/BG.shp YEAR=2019`).
 
 Get-tiger includes shortcut tasks like this for the following geographies. They all follow the same pattern (`2014/<NAME>.shp`):
 

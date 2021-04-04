@@ -165,6 +165,15 @@ all: commands.txt
 
 .SECONDEXPANSION:
 
+# Merged file shortcuts
+
+merge = BG COUNTY_WITHIN_UA COUSUB ELSD PLACE PRISECROADS PUMA SCSD SLDL SLDU TABBLOCK TRACT UNSD
+merge_shp = $(foreach x,$(merge),$(YEAR)/$x.shp)
+
+$(merge_shp): $(YEAR)/%.shp: $$(addprefix $(YEAR)/,$$($$*))
+	@rm -rf $@
+	ogrmerge.py -f 'ESRI Shapefile' -single -field_strategy FirstLayer -o $@ $(foreach x,$^,/vsizip/$(x)/$(notdir $(x:zip=shp)))
+
 $(DATASETS): $$(addprefix $(YEAR)/,$$($$@))
 
 # define combinecountyfiles
