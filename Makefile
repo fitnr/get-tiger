@@ -156,12 +156,18 @@ zipfiles = $(addprefix $(YEAR)/,$(zip_national) $(zip_state) $(zip_county))
 
 export CPL_MAX_ERROR_REPORTS=3
 
-.PHONY: all $(DATASETS)
+.PHONY: help $(DATASETS)
 
 # Print shortcut commands
-all: commands.txt
+help: commands.txt
 	@cat $<
-	@echo default year is $(YEAR)
+	@echo
+	@echo current variable settings:
+	@echo YEAR         = $(YEAR)
+	@echo CONGRESS     = $(CONGRESS)
+	@echo CARTOGRAPHIC = $(CARTOGRAPHIC)
+	@echo RESOLUTION   = $(RESOLUTION)
+	@echo STATE_FIPS   = $(STATE_FIPS)
 
 .SECONDEXPANSION:
 
