@@ -179,37 +179,40 @@ $(DATASETS): $$(addprefix $(YEAR)/,$$($$@))
 
 # Merged file shortcuts
 
-merge = BG COUNTY_WITHIN_UA COUSUB ELSD PLACE PRISECROADS PUMA SCSD SLDL SLDU TABBLOCK TRACT UNSD AREAWATER
-merge-shp = $(foreach x,$(merge),$(YEAR)/$x.shp)
+merges = BG COUNTY_WITHIN_UA COUSUB ELSD PLACE PRISECROADS PUMA SCSD SLDL SLDU TABBLOCK TRACT UNSD AREAWATER
+merge-shp = $(foreach x,$(merges),$(YEAR)/$x.shp)
 
 ifeq ($(GDAL),true)
-
-define merge-command
-ogrmerge.py -f 'ESRI Shapefile' -overwrite_ds -single -o $@ $(foreach f,$^,/vsizip/$(f)/$(notdir $(f:zip=shp)))
-endef
-
+merge-command = ogrmerge.py -f 'ESRI Shapefile' -overwrite_ds -single -o $@
+merge-zip-command = $(merge-command) $(foreach f,$^,/vsizip/$(f)/$(notdir $(f:zip=shp)))
+merge-shp-command = $(merge-command) $^
 else
 
-define merge-command
+define merge-zip-command
 @echo "unable to create $@ because GDAL isn't installed. These source files have been downloaded:"
 @echo $^
 endef
 
+merge-shp-command = $(merge-zip-command)
+
 endif # ifeq ($(GDAL),true)
 
 $(merge-shp): $(YEAR)/%.shp: $$(addprefix $(YEAR)/,$$($$*))
-	$(merge-command)
+	$(merge-zip-command)
+
+$(YEAR)/RAILS.shp $(YEAR)/ROADS.shp: $(YEAR)/%.shp: $$(addprefix $(YEAR)/,$$($$*))
+	$(merge-shp-command)
 
 # commands that merge county-level files
 
 $(addprefix $(YEAR)/,$(AREAWATER)): $(YEAR)/AREAWATER/tl_$(YEAR)_%_areawater.shp: $$(foreach x,$$(COUNTIES_$$*),$(YEAR)/AREAWATER/tl_$(YEAR)_$$*$$x_areawater.zip)
-	$(merge-command)
+	$(merge-zip-command)
 
 $(addprefix $(YEAR)/,$(LINEARWATER)): $(YEAR)/LINEARWATER/tl_$(YEAR)_%_linearwater.shp: $$(foreach x,$$(COUNTIES_$$*),$(YEAR)/LINEARWATER/tl_$(YEAR)_$$*$$x_linearwater.zip)
-	$(merge-command)
+	$(merge-zip-command)
 
 $(addprefix $(YEAR)/,$(ROADS)): $(YEAR)/ROADS/tl_$(YEAR)_%_roads.shp: $$(foreach x,$$(COUNTIES_$$*),$(YEAR)/ROADS/tl_$(YEAR)_$$*$$x_roads.zip)
-	$(merge-command)
+	$(merge-zip-command)
 
 # Download ZIP files
 
