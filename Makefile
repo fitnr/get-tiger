@@ -36,16 +36,16 @@ DATASETS = AREAWATER NATION REGION DIVISION AIANNH AITSN ANRC \
 	PUMA RAILS ROADS SCSD SLDL SLDU STATE SUBBARRIO \
 	TABBLOCK TBG TTRACT TRACT UAC UNSD ZCTA5
 
+carto-base  = $(1)/cb_$(YEAR)_$(2)_$(3)_$(RESOLUTION).zip
+carto-url  := ftp://ftp2.census.gov/geo/tiger/GENZ$(YEAR)/shp
+
+tiger-base  = $(1)/tl_$(YEAR)_$(2)_$(3).zip
+tiger-url  := ftp://ftp2.census.gov/geo/tiger/TIGER$(YEAR)
+
 ifeq ($(CARTOGRAPHIC),true)
-
-base  = $(1)/cb_$(YEAR)_$(2)_$(3)_$(RESOLUTION).zip
-url  := ftp://ftp2.census.gov/geo/tiger/GENZ$(YEAR)/shp
-
+base = $(carto-base)
 else
-
-base  = $(1)/tl_$(YEAR)_$(2)_$(3).zip
-url  := ftp://ftp2.census.gov/geo/tiger/TIGER$(YEAR)
-
+base  = $(tiger-base)
 endif # ifeq ($(CARTOGRAPHIC),true)
 
 # cartographic-only slugs
@@ -154,8 +154,6 @@ tiger-only = \
 	$(linearwatercounty) \
 	$(roadscounty)
 
-zips = $(addprefix $(YEAR)/,$(carto-or-tiger) $(cartographic-only) $(tiger-only))
-
 export CPL_MAX_ERROR_REPORTS=3
 
 .PHONY: help $(DATASETS)
@@ -216,14 +214,23 @@ $(addprefix $(YEAR)/,$(ROADS)): $(YEAR)/ROADS/tl_$(YEAR)_%_roads.shp: $$(foreach
 
 # Download ZIP files
 
-wget := wget -q -nc -t 10 --waitretry 1 --timeout 2
+get = curl -o $@ -LsS --retry 10 --retry-delay 1 --connect-timeout 2
 
-$(zips): $(YEAR)/%.zip: | $$(@D)
+carto-get = $(get) $(carto-url)/$(@F)
+tiger-get = $(get) $(tiger-url)/$(subst $(YEAR)/,,$@)
+
+$(addprefix $(YEAR)/,$(carto-or-tiger)): $(YEAR)/%.zip: | $$(@D)
 ifeq ($(CARTOGRAPHIC),true)
-	$(wget) $(url)/$(@F) -o $@
+	$(carto-get)
 else
-	$(wget) $(url)/$(subst $(YEAR)/,,$@) -O $@
+	$(tiger-get)
 endif
+
+$(addprefix $(YEAR)/,$(cartographic-only)): $(YEAR)/%.zip: | $$(@D)
+	$(carto-get)
+
+$(addprefix $(YEAR)/,$(tiger-only)): $(YEAR)/%.zip: | $$(@D)
+	$(tiger-get)
 
 $(addprefix $(YEAR)/,$(DATASETS)): $(YEAR)
 	-mkdir -p $@
