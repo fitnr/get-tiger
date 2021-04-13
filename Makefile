@@ -7,13 +7,13 @@
 SHELL := /bin/bash
 
 # Year of census data - check Census site for most recent year available.
-YEAR := 2019
+YEAR := 2020
 
 # Congressional districts are updated every two years.
 CONGRESS := 116
 
 # Some files can be drawn from the cartographic boundary or tiger geodata. Default is cartographic.
-CARTOGRAPHIC ?= true
+CARTOGRAPHIC ?= false
 
 # Other valid values: 20m, 5m
 RESOLUTION := 500k

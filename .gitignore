@@ -9,3 +9,4 @@ key.ini
 /20*
 *.vrt
 geocoder-loader
+.DS_Store
